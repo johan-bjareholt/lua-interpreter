@@ -43,7 +43,7 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 [0-9]+									{ log("number",yytext); return yy::parser::make_NUMBER(yytext);}
 \"[^\"]*\"								{ log("string",yytext); return yy::parser::make_STRING(yytext);}
 \.\.\.									{ log("tdot",yytext); return yy::parser::make_TDOT(yytext);}
-[A-Za-z][A-Za-z0-9_]+					{ log("name",yytext); return yy::parser::make_NAME(yytext); }
+[A-Za-z][A-Za-z0-9_]*					{ log("name",yytext); return yy::parser::make_NAME(yytext); }
 
  /* Token categories */
 [,;]									{ log("fieldsep",yytext); return yy::parser::make_FIELDSEP(yytext); }
@@ -53,6 +53,7 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 
  /* Single tokens */
 =										{ log("equals",yytext); return yy::parser::make_EQUALS(yytext); }
+\.										{ log("dot",yytext); return yy::parser::make_DOT(yytext); }
 
  /* blocks */
 \(										{ log("parentheses_l",yytext); return yy::parser::make_PARANTHESES_L(yytext); }

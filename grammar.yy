@@ -33,6 +33,7 @@
 %type <Node> explist
 
 %type <Node> name
+%type <Node> funcname
 %type <Node> namelist
 
 %type <Node> function
@@ -72,6 +73,7 @@
 %token <std::string> UNOP
 
 %token <std::string> EQUALS
+%token <std::string> DOT
 
 %token <std::string> BRACES_L
 %token <std::string> BRACES_R
@@ -145,7 +147,7 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($8);
 			$$.children.push_back($10);
 		}
-		| FUNCTION name funcbody {
+		| FUNCTION funcname funcbody {
 			$$ = Node("stat","function");
 			$$.children.push_back($2);
 			$$.children.push_back($3);
@@ -247,6 +249,16 @@ name	: NAME {
 	 		$$ = Node("name", $1);
 	 	}
 
+funcname: name {
+			$$ = Node("funcname","");
+			$$.children.push_back($1);
+		}
+		| funcname DOT name {
+			$$ = $1;
+			$$.children.push_back($3);
+		}
+		;
+
 namelist: name {
 			$$ = Node("namelist","");
 			$$.children.push_back($1);
@@ -276,10 +288,14 @@ exp		: NIL {
 			$$ = Node("exp", $1);
 		}
 		| exp binop exp {
-			$$ = Node("exp", "");
+			$$ = Node("exp", "binoperation");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 			$$.children.push_back($3);
+		}
+		| function {
+			$$ = Node("exp","in-line function");
+			$$.children.push_back($1);
 		}
 		;
 
@@ -292,11 +308,13 @@ explist	: exp {
 			$$.children.push_back($3);
 		}
 		;
-/*
+
 function: FUNCTION funcbody {
+			$$ = Node("function","in-line");
+			$$.children.push_back($2);
 		}
 		;
-*/
+
 funcbody: PARANTHESES_L parlist PARANTHESES_R block END {
 			$$ = Node("funcbody","");
 			$$.children.push_back($2);
