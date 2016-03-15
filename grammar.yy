@@ -115,6 +115,26 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 		}
+		| REPEAT block UNTIL exp {
+			$$ = Node("stat","repear-until block");
+			$$.children.push_back($2);
+			$$.children.push_back($4);
+		}
+		| FOR name EQUALS exp FIELDSEP exp DO block END {
+			$$ = Node("stat","for, 2var");
+			$$.children.push_back($2);
+			$$.children.push_back($4);
+			$$.children.push_back($6);
+			$$.children.push_back($8);
+		}
+		| FOR name EQUALS exp FIELDSEP exp FIELDSEP exp DO block END {
+			$$ = Node("stat","for, 3var");
+			$$.children.push_back($2);
+			$$.children.push_back($4);
+			$$.children.push_back($6);
+			$$.children.push_back($8);
+			$$.children.push_back($10);
+		}
 		| FUNCTION name funcbody {
 			$$ = Node("stat","function");
 			$$.children.push_back($2);
