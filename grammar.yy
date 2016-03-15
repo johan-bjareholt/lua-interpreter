@@ -30,6 +30,7 @@
 %type <Node> varlist
 
 %type <Node> exp
+%type <Node> prefixexp
 %type <Node> explist
 
 %type <Node> name
@@ -37,9 +38,12 @@
 %type <Node> namelist
 
 %type <Node> function
+%type <Node> functioncall
 %type <Node> funcbody
 %type <Node> parlist
+%type <Node> args
 
+%type <Node> fieldsep
 %type <Node> binop
 
 %token <std::string> DO
@@ -68,12 +72,14 @@
 %token <std::string> TDOT
 %token <std::string> NAME
 
-%token <std::string> FIELDSEP
 %token <std::string> BINOP
 %token <std::string> UNOP
 
 %token <std::string> EQUALS
 %token <std::string> DOT
+%token <std::string> COLON
+%token <std::string> COMMA
+%token <std::string> SEMICOLON
 
 %token <std::string> BRACES_L
 %token <std::string> BRACES_R
@@ -132,14 +138,14 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($2);
 			$$.children.push_back($3);
 		}
-		| FOR name EQUALS exp FIELDSEP exp DO block END {
+		| FOR name EQUALS exp COLON exp DO block END {
 			$$ = Node("stat","for, 2var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 			$$.children.push_back($6);
 			$$.children.push_back($8);
 		}
-		| FOR name EQUALS exp FIELDSEP exp FIELDSEP exp DO block END {
+		| FOR name EQUALS exp COLON exp COLON exp DO block END {
 			$$ = Node("stat","for, 3var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
@@ -224,7 +230,7 @@ fieldlist: field {
 			$$ = Node("fieldlist","");
 			$$.children.push_back($1);
 		}
-		| fieldlist FIELDSEP field {
+		| fieldlist fieldsep field {
 			$$ = $1;
 			$$.children.push_back($3);
 		}
@@ -239,7 +245,7 @@ varlist	: var {
 			$$ = Node("varlist","");
 			$$.children.push_back($1);
 		}
-		| varlist FIELDSEP var {
+		| varlist COMMA var {
 			$$ = $1;
 			$$.children.push_back($3);
 		}
@@ -263,7 +269,7 @@ namelist: name {
 			$$ = Node("namelist","");
 			$$.children.push_back($1);
 		}
-		| namelist FIELDSEP name {
+		| namelist COMMA name {
 			$$ = $1;
 			$$.children.push_back($3);
 		}
@@ -297,13 +303,28 @@ exp		: NIL {
 			$$ = Node("exp","in-line function");
 			$$.children.push_back($1);
 		}
+		| prefixexp {
+			$$ = Node("exp","prefixexp");
+			$$.children.push_back($1);
+		}
+		;
+
+prefixexp: var {
+			$$ = $1;
+		}
+		| functioncall {
+			$$ = $1;
+		}
+		| PARANTHESES_L exp PARANTHESES_R {
+			$$ = $2;
+		}
 		;
 
 explist	: exp {
 			$$ = Node("explist", "");
 			$$.children.push_back($1);
 		}
-		| explist FIELDSEP exp {
+		| explist COMMA exp {
 			$$ = $1;
 			$$.children.push_back($3);
 		}
@@ -312,6 +333,19 @@ explist	: exp {
 function: FUNCTION funcbody {
 			$$ = Node("function","in-line");
 			$$.children.push_back($2);
+		}
+		;
+
+functioncall: prefixexp args {
+			$$ = Node("functioncall","1");
+			$$.children.push_back($1);
+			$$.children.push_back($2);
+		}
+		| prefixexp COLON name args {
+			$$ = Node("functioncall","2");
+			$$.children.push_back($1);
+			$$.children.push_back($3);
+			$$.children.push_back($4);
 		}
 		;
 
@@ -329,6 +363,26 @@ parlist	: namelist {
 		| TDOT {
 			$$ = Node("parlist","tdot");
 		}
+
+args	: PARANTHESES_L PARANTHESES_R {
+	 		$$ = Node("args","1");
+	 	}
+		| PARANTHESES_L parlist PARANTHESES_R {
+			$$ = Node("args","2");
+			$$.children.push_back($2);
+		}
+		| STRING {
+			$$ = Node("args",$1);
+		}
+		;
+
+fieldsep: COMMA {
+			$$ = Node("fieldsep",$1);
+		}
+		| SEMICOLON {
+			$$ = Node("fieldsep",$1);
+		}
+		;
 
 binop	: BINOP {
 	  		$$ = Node("binop", $1);

@@ -46,7 +46,6 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 [A-Za-z][A-Za-z0-9_]*					{ log("name",yytext); return yy::parser::make_NAME(yytext); }
 
  /* Token categories */
-[,;]									{ log("fieldsep",yytext); return yy::parser::make_FIELDSEP(yytext); }
 ([-+*/^%<>]|\.\.|<=|>=|==|~=|and|or)	{ log("binop",yytext); return yy::parser::make_BINOP(yytext); }
 ([-#]|not)								{ log("unop",yytext); return yy::parser::make_UNOP(yytext); }
 
@@ -54,6 +53,9 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
  /* Single tokens */
 =										{ log("equals",yytext); return yy::parser::make_EQUALS(yytext); }
 \.										{ log("dot",yytext); return yy::parser::make_DOT(yytext); }
+:										{ log("colon",yytext); return yy::parser::make_COLON(yytext); }
+,										{ log("comma",yytext); return yy::parser::make_COMMA(yytext); }
+;										{ log("semicolon",yytext); return yy::parser::make_SEMICOLON(yytext); }
 
  /* blocks */
 \(										{ log("parentheses_l",yytext); return yy::parser::make_PARANTHESES_L(yytext); }
