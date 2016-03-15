@@ -23,9 +23,6 @@
 %type <Node> elseif
 %type <Node> else
 
-%type <Node> field
-%type <Node> fieldlist
-
 %type <Node> var
 %type <Node> varlist
 
@@ -43,8 +40,14 @@
 %type <Node> parlist
 %type <Node> args
 
+%type <Node> tableconstructor
+
+%type <Node> field
+%type <Node> fieldlist
 %type <Node> fieldsep
+
 %type <Node> binop
+%type <Node> unop
 
 %token <std::string> DO
 %token <std::string> WHILE
@@ -74,6 +77,7 @@
 
 %token <std::string> BINOP
 %token <std::string> UNOP
+%token <std::string> MINUS
 
 %token <std::string> EQUALS
 %token <std::string> DOT
@@ -138,14 +142,14 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($2);
 			$$.children.push_back($3);
 		}
-		| FOR name EQUALS exp COLON exp DO block END {
+		| FOR name EQUALS exp COMMA exp DO block END {
 			$$ = Node("stat","for, 2var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 			$$.children.push_back($6);
 			$$.children.push_back($8);
 		}
-		| FOR name EQUALS exp COLON exp COLON exp DO block END {
+		| FOR name EQUALS exp COMMA exp COMMA exp DO block END {
 			$$ = Node("stat","for, 3var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
@@ -209,31 +213,6 @@ else	: ELSE block {
 			$$ = Node("else","empty");
 		}
 		;
-
-field	: BRACKET_L exp BRACKET_R EQUALS exp {
-	  		$$ = Node("field","bracketequals");
-			$$.children.push_back($2);
-			$$.children.push_back($5);
-	  	}
-		| name EQUALS exp {
-			$$ = Node("field","equals");
-			$$.children.push_back($1);
-			$$.children.push_back($3);
-		}
-		| exp {
-			$$ = Node("field", "exp");
-			$$.children.push_back($1);
-		}
-	  	;
-
-fieldlist: field {
-			$$ = Node("fieldlist","");
-			$$.children.push_back($1);
-		}
-		| fieldlist fieldsep field {
-			$$ = $1;
-			$$.children.push_back($3);
-		}
 
 var		: name {
 	 		$$ = Node("var", "name");
@@ -307,6 +286,15 @@ exp		: NIL {
 			$$ = Node("exp","prefixexp");
 			$$.children.push_back($1);
 		}
+		| tableconstructor {
+			$$ = Node("exp","tableconstructor");
+			$$.children.push_back($1);
+		}
+		| unop exp {
+			$$ = Node("exp","unop exp");
+			$$.children.push_back($1);
+			$$.children.push_back($2);
+		}
 		;
 
 prefixexp: var {
@@ -341,7 +329,7 @@ functioncall: prefixexp args {
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 		}
-		| prefixexp COLON name args {
+		| prefixexp COMMA name args {
 			$$ = Node("functioncall","2");
 			$$.children.push_back($1);
 			$$.children.push_back($3);
@@ -354,15 +342,25 @@ funcbody: PARANTHESES_L parlist PARANTHESES_R block END {
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 		}
+		| PARANTHESES_L PARANTHESES_R block END {
+			$$ = Node("funcbody","");
+			$$.children.push_back(Node("parlist",""));
+			$$.children.push_back($3);
+		}
 		;
 
 parlist	: namelist {
 			$$ = Node("parlist","namelist");
 			$$.children.push_back($1);
 		}
+		| namelist COMMA TDOT {
+			$$ = $1;
+			$$.children.push_back(Node("argover",""));
+		}
 		| TDOT {
 			$$ = Node("parlist","tdot");
 		}
+		;
 
 args	: PARANTHESES_L PARANTHESES_R {
 	 		$$ = Node("args","1");
@@ -376,6 +374,38 @@ args	: PARANTHESES_L PARANTHESES_R {
 		}
 		;
 
+tableconstructor: BRACES_L fieldlist BRACES_R {
+			$$ = Node("tableconstructor","");
+			$$.children.push_back($2);
+		}
+		;
+
+field	: BRACKET_L exp BRACKET_R EQUALS exp {
+	  		$$ = Node("field","bracketequals");
+			$$.children.push_back($2);
+			$$.children.push_back($5);
+	  	}
+		| name EQUALS exp {
+			$$ = Node("field","equals");
+			$$.children.push_back($1);
+			$$.children.push_back($3);
+		}
+		| exp {
+			$$ = Node("field", "exp");
+			$$.children.push_back($1);
+		}
+	  	;
+
+fieldlist: field {
+			$$ = Node("fieldlist","");
+			$$.children.push_back($1);
+		}
+		| fieldlist fieldsep field {
+			$$ = $1;
+			$$.children.push_back($3);
+		}
+
+
 fieldsep: COMMA {
 			$$ = Node("fieldsep",$1);
 		}
@@ -387,4 +417,15 @@ fieldsep: COMMA {
 binop	: BINOP {
 	  		$$ = Node("binop", $1);
 	  	}
+		| MINUS {
+			$$ = Node("binop", $1);
+		}
+		;
+
+unop	: UNOP {
+	 		$$ = Node("unop", $1);
+	 	}
+		| MINUS {
+			$$ = Node("unop", $1);
+		}
 		;

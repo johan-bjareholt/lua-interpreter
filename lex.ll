@@ -11,6 +11,10 @@
 
 %%
 
+ /* comments */
+--\[\[([^\]])*\]\]--					{ log("comment",yytext); }
+--[^\n]*									{ log("comment",yytext); }
+
  /*
 	Reserved keywords
  */
@@ -35,7 +39,6 @@ local									{ log("local", yytext); return yy::parser::make_LOCAL(yytext); }
 function								{ log("function",yytext); return yy::parser::make_FUNCTION(yytext); }
 break									{ log("break",yytext); return yy::parser::make_BREAK(yytext); }
 
-
  /* Values */
 nil										{ log("nil", yytext); return yy::parser::make_NIL(yytext);}
 false									{ log("false", yytext); return yy::parser::make_FALSE(yytext); }
@@ -46,8 +49,9 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 [A-Za-z][A-Za-z0-9_]*					{ log("name",yytext); return yy::parser::make_NAME(yytext); }
 
  /* Token categories */
-([-+*/^%<>]|\.\.|<=|>=|==|~=|and|or)	{ log("binop",yytext); return yy::parser::make_BINOP(yytext); }
-([-#]|not)								{ log("unop",yytext); return yy::parser::make_UNOP(yytext); }
+([+*/^%<>]|\.\.|<=|>=|==|~=|and|or)		{ log("binop",yytext); return yy::parser::make_BINOP(yytext); }
+([#]|not)								{ log("unop",yytext); return yy::parser::make_UNOP(yytext); }
+-										{ log("minus(unop/binop)",yytext); return yy::parser::make_MINUS(yytext); }
 
 
  /* Single tokens */
@@ -60,8 +64,8 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
  /* blocks */
 \(										{ log("parentheses_l",yytext); return yy::parser::make_PARANTHESES_L(yytext); }
 \)										{ log("parantheses_r",yytext); return yy::parser::make_PARANTHESES_R(yytext); }
-{										{ log("braces_l", yytext); return yy::parser::make_BRACES_L(yytext); }
-}										{ log("braces_r", yytext); return yy::parser::make_BRACES_R(yytext); }
+\{										{ log("braces_l", yytext); return yy::parser::make_BRACES_L(yytext); }
+\}										{ log("braces_r", yytext); return yy::parser::make_BRACES_R(yytext); }
 [\[]									{ log("bracket_l",yytext); return yy::parser::make_BRACKET_L(yytext); }
 [\]]									{ log("bracket_r",yytext); return yy::parser::make_BRACKET_R(yytext); }
 
