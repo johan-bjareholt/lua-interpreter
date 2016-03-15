@@ -18,6 +18,10 @@
 %type <Node> chunk
 %type <Node> stat
 
+%type <Node> if
+%type <Node> elseiflist
+%type <Node> elseif
+%type <Node> else
 
 %type <Node> field
 %type <Node> fieldlist
@@ -120,6 +124,12 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 		}
+		| if elseiflist else END {
+			$$ = Node("stat","else-elseif-else");
+			$$.children.push_back($1);
+			$$.children.push_back($2);
+			$$.children.push_back($3);
+		}
 		| FOR name EQUALS exp FIELDSEP exp DO block END {
 			$$ = Node("stat","for, 2var");
 			$$.children.push_back($2);
@@ -155,6 +165,42 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($4);
 		}
 	 	;
+
+if		: IF exp THEN block {
+			$$ = Node("if","");
+			$$.children.push_back($2);
+			$$.children.push_back($4);
+		}
+		;
+
+elseiflist: elseif {
+			$$ = Node("elseiflist","");
+			$$.children.push_back($1);
+		}
+		| elseiflist elseif {
+			$$ = $1;
+			$$.children.push_back($2);
+		}
+		| /* empty */ {
+			$$ = Node("elseiflist","empty");
+		}
+		;
+
+elseif	: ELSEIF exp THEN block {
+			$$ = Node("elseif","");
+			$$.children.push_back($2);
+			$$.children.push_back($4);
+		}
+		;
+
+else	: ELSE block {
+	 		$$ = Node("else","");
+			$$.children.push_back($2);
+	 	}
+		| /* empty */ {
+			$$ = Node("else","empty");
+		}
+		;
 
 field	: BRACKET_L exp BRACKET_R EQUALS exp {
 	  		$$ = Node("field","bracketequals");
