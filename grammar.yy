@@ -20,12 +20,16 @@
 
 
 %type <Node> field
+%type <Node> fieldlist
 
 %type <Node> var
 %type <Node> varlist
 
 %type <Node> exp
 %type <Node> explist
+
+%type <Node> name
+%type <Node> namelist
 
 %type <Node> function
 %type <Node> funcbody
@@ -111,12 +115,57 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 		}
+		| FUNCTION name funcbody {
+			$$ = Node("stat","function");
+			$$.children.push_back($2);
+			$$.children.push_back($3);
+		}
+		| LOCAL FUNCTION name funcbody {
+			$$ = Node("stat","local function");
+			$$.children.push_back($3);
+			$$.children.push_back($4);
+		}
+		| LOCAL namelist {
+			$$ = Node("stat","undefied local variable");
+			$$.children.push_back($2);
+		}
+		| LOCAL namelist EQUALS explist {
+			$$ = Node("stat","local variable");
+			$$.children.push_back($2);
+			$$.children.push_back($4);
+		}
 	 	;
 
-/*
-field	: BRACKET_L exp BRACKET_R EQUALS exp
+field	: BRACKET_L exp BRACKET_R EQUALS exp {
+	  		$$ = Node("field","bracketequals");
+			$$.children.push_back($2);
+			$$.children.push_back($5);
+	  	}
+		| name EQUALS exp {
+			$$ = Node("field","equals");
+			$$.children.push_back($1);
+			$$.children.push_back($3);
+		}
+		| exp {
+			$$ = Node("field", "exp");
+			$$.children.push_back($1);
+		}
 	  	;
-*/
+
+fieldlist: field {
+			$$ = Node("fieldlist","");
+			$$.children.push_back($1);
+		}
+		| fieldlist FIELDSEP field {
+			$$ = $1;
+			$$.children.push_back($3);
+		}
+
+var		: name {
+	 		$$ = Node("var", "name");
+			$$.children.push_back($1);
+	 	}
+	 	;
 
 varlist	: var {
 			$$ = Node("varlist","");
@@ -128,16 +177,15 @@ varlist	: var {
 		}
 		;
 
-var		: NAME {
-	 		$$ = Node("var", $1);
+name	: NAME {
+	 		$$ = Node("name", $1);
 	 	}
-	 	;
 
-explist	: exp {
-			$$ = Node("explist", "");
+namelist: name {
+			$$ = Node("namelist","");
 			$$.children.push_back($1);
 		}
-		| explist FIELDSEP exp {
+		| namelist FIELDSEP name {
 			$$ = $1;
 			$$.children.push_back($3);
 		}
@@ -168,11 +216,21 @@ exp		: NIL {
 			$$.children.push_back($3);
 		}
 		;
+
+explist	: exp {
+			$$ = Node("explist", "");
+			$$.children.push_back($1);
+		}
+		| explist FIELDSEP exp {
+			$$ = $1;
+			$$.children.push_back($3);
+		}
+		;
 /*
 function: FUNCTION funcbody {
 		}
 		;
-
+*/
 funcbody: PARANTHESES_L parlist PARANTHESES_R block END {
 			$$ = Node("funcbody","");
 			$$.children.push_back($2);
@@ -180,10 +238,13 @@ funcbody: PARANTHESES_L parlist PARANTHESES_R block END {
 		}
 		;
 
-parlist	: {
-		$$ = Node("","");
+parlist	: namelist {
+			$$ = Node("parlist","namelist");
+			$$.children.push_back($1);
 		}
-*/
+		| TDOT {
+			$$ = Node("parlist","tdot");
+		}
 
 binop	: BINOP {
 	  		$$ = Node("binop", $1);

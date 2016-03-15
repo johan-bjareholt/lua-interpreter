@@ -55,8 +55,8 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 =										{ log("equals",yytext); return yy::parser::make_EQUALS(yytext); }
 
  /* blocks */
-\(										{ log("parentheses_l",yytext); }
-\)										{ log("parantheses_r",yytext); }
+\(										{ log("parentheses_l",yytext); return yy::parser::make_PARANTHESES_L(yytext); }
+\)										{ log("parantheses_r",yytext); return yy::parser::make_PARANTHESES_R(yytext); }
 {										{ log("braces_l", yytext); return yy::parser::make_BRACES_L(yytext); }
 }										{ log("braces_r", yytext); return yy::parser::make_BRACES_R(yytext); }
 [\[]									{ log("bracket_l",yytext); return yy::parser::make_BRACKET_L(yytext); }
