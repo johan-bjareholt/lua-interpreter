@@ -35,6 +35,7 @@
 
 %type <Node> name
 %type <Node> funcname
+%type <Node> funcname2
 %type <Node> namelist
 
 %type <Node> function
@@ -197,6 +198,12 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($8);
 			$$.children.push_back($10);
 		}
+		| FOR namelist IN explist DO block END {
+			$$ = Node("stat","for, in");
+			$$.children.push_back($2);
+			$$.children.push_back($4);
+			$$.children.push_back($6);
+		}
 		| FUNCTION funcname funcbody {
 			$$ = Node("stat","function");
 			$$.children.push_back($2);
@@ -284,13 +291,22 @@ name	: NAME {
 	 	}
 		;
 
-funcname: name {
+funcname: funcname2 {
+			$$ = $1;
+		}
+		| funcname2 COLON name {
+			$$ = $1;
+			$$.children.push_back($3);
+		}
+		;
+
+funcname2: name {
 			$$ = Node("funcname","");
 			$$.children.push_back($1);
 		}
-		| funcname DOT name {
+		| funcname2 DOT name {
 			$$ = $1;
-			$$.children.push_back($3);
+			$$.children.push_back($1);
 		}
 		;
 
