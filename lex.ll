@@ -13,7 +13,7 @@
 
  /* comments */
 --\[\[([^\]])*\]\]--					{ log("comment",yytext); }
---[^\n]*									{ log("comment",yytext); }
+--[^\n]*								{ log("comment",yytext); }
 
  /*
 	Reserved keywords
@@ -31,12 +31,18 @@ if										{ log("if", yytext); return yy::parser::make_IF(yytext); }
 then									{ log("then", yytext); return yy::parser::make_THEN(yytext); }
 elseif									{ log("elseif", yytext); return yy::parser::make_ELSEIF(yytext); }
 else									{ log("else", yytext); return yy::parser::make_ELSE(yytext); }
+ 
+ /* Token categories */
+([+*/^%<>]|\.\.|<=|>=|==|~=|and|or)		{ log("binop",yytext); return yy::parser::make_BINOP(yytext); }
+([#]|not)								{ log("unop",yytext); return yy::parser::make_UNOP(yytext); }
+-										{ log("minus(unop/binop)",yytext); return yy::parser::make_MINUS(yytext); }
 
  /*  */
 local									{ log("local", yytext); return yy::parser::make_LOCAL(yytext); }
 
  /* function */
 function								{ log("function",yytext); return yy::parser::make_FUNCTION(yytext); }
+return									{ log("return",yytext); return yy::parser::make_RETURN(yytext); }
 break									{ log("break",yytext); return yy::parser::make_BREAK(yytext); }
 
  /* Values */
@@ -46,12 +52,8 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 [0-9]+									{ log("number",yytext); return yy::parser::make_NUMBER(yytext);}
 \"[^\"]*\"								{ log("string",yytext); return yy::parser::make_STRING(yytext);}
 \.\.\.									{ log("tdot",yytext); return yy::parser::make_TDOT(yytext);}
-[A-Za-z][A-Za-z0-9_]*					{ log("name",yytext); return yy::parser::make_NAME(yytext); }
+[A-Za-z_][A-Za-z0-9_]*					{ log("name",yytext); return yy::parser::make_NAME(yytext); }
 
- /* Token categories */
-([+*/^%<>]|\.\.|<=|>=|==|~=|and|or)		{ log("binop",yytext); return yy::parser::make_BINOP(yytext); }
-([#]|not)								{ log("unop",yytext); return yy::parser::make_UNOP(yytext); }
--										{ log("minus(unop/binop)",yytext); return yy::parser::make_MINUS(yytext); }
 
 
  /* Single tokens */
@@ -70,6 +72,7 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 [\]]									{ log("bracket_r",yytext); return yy::parser::make_BRACKET_R(yytext); }
 
 
+[ \t\n]									{ /* spacing */}
 <<EOF>>                 				{ log("end", ""); return yy::parser::make_QUIT(); }
 
 %%

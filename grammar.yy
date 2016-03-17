@@ -17,6 +17,9 @@
 %type <Node> block
 %type <Node> chunk
 %type <Node> stat
+%type <Node> optlaststat
+%type <Node> laststat
+
 
 %type <Node> if
 %type <Node> elseiflist
@@ -44,6 +47,8 @@
 
 %type <Node> field
 %type <Node> fieldlist
+%type <Node> fieldlist2
+%type <Node> optfieldsep
 %type <Node> fieldsep
 
 %type <Node> binop
@@ -65,6 +70,7 @@
 %token <std::string> LOCAL
 
 %token <std::string> FUNCTION
+%token <std::string> RETURN
 %token <std::string> BREAK
 
 %token <std::string> NIL
@@ -98,22 +104,45 @@
 
 %%
 
-chunk	: block
+block	: chunk
 		{
-			$$ = Node("Chunk","");
+			$$ = Node("Block","");
 			$$.children.push_back($1);
 			root = $$;
 		}
 		;
 
-block	: stat
+chunk	: stat optsemi optlaststat
 	   	{	
-			$$ = Node("Block","");
+			$$ = Node("Chunk","");
+			$$.children.push_back($1);
+			$$.children.push_back($3);
+		}
+		| laststat optsemi {
+			$$ = Node("Chunk","");
 			$$.children.push_back($1);
 		}
-	   	| block stat {
+	   	| chunk stat optsemi {
 			$$ = $1;
 			$$.children.push_back($2);
+		}
+		;
+
+optsemi	: SEMICOLON {}
+		| /* empty */
+		;
+
+optlaststat: laststat { $$ = $1; }
+		| /*empty */ {}
+		;
+
+laststat: RETURN explist {
+			$$ = Node("laststat","explist");
+			$$.children.push_back($2);
+		}
+		| BREAK {
+			$$ = Node("laststat","break");
+			$$.children.push_back(Node("break",""));
 		}
 		;
 
@@ -121,6 +150,10 @@ stat	: varlist EQUALS explist {
 			$$ = Node("stat", "assignment");
 			$$.children.push_back($1);
 			$$.children.push_back($3);
+		}
+		| functioncall {
+			$$ = Node("stat","funcitoncall");
+			$$.children.push_back($1);
 		}
 		| DO block END {
 			$$ = Node("stat", "do-end block");
@@ -218,6 +251,15 @@ var		: name {
 	 		$$ = Node("var", "name");
 			$$.children.push_back($1);
 	 	}
+		| prefixexp BRACKET_L exp BRACKET_R {
+			$$ = Node("var","inbrackets");
+			$$.children.push_back($1);
+			$$.children.push_back($3);
+		}
+		| prefixexp DOT name {
+			$$ = $1;
+			$$.children.push_back($3);
+		}
 	 	;
 
 varlist	: var {
@@ -233,6 +275,7 @@ varlist	: var {
 name	: NAME {
 	 		$$ = Node("name", $1);
 	 	}
+		;
 
 funcname: name {
 			$$ = Node("funcname","");
@@ -272,14 +315,8 @@ exp		: NIL {
 		| TDOT {
 			$$ = Node("exp", $1);
 		}
-		| exp binop exp {
-			$$ = Node("exp", "binoperation");
-			$$.children.push_back($1);
-			$$.children.push_back($2);
-			$$.children.push_back($3);
-		}
 		| function {
-			$$ = Node("exp","in-line function");
+			$$ = Node("exp","function");
 			$$.children.push_back($1);
 		}
 		| prefixexp {
@@ -290,10 +327,26 @@ exp		: NIL {
 			$$ = Node("exp","tableconstructor");
 			$$.children.push_back($1);
 		}
+		| exp binop exp {
+			$$ = Node("exp", "binoperation");
+			$$.children.push_back($1);
+			$$.children.push_back($2);
+			$$.children.push_back($3);
+		}
 		| unop exp {
 			$$ = Node("exp","unop exp");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
+		}
+		;
+
+explist	: exp {
+			$$ = Node("explist", "");
+			$$.children.push_back($1);
+		}
+		| explist COMMA exp {
+			$$ = $1;
+			$$.children.push_back($3);
 		}
 		;
 
@@ -308,16 +361,6 @@ prefixexp: var {
 		}
 		;
 
-explist	: exp {
-			$$ = Node("explist", "");
-			$$.children.push_back($1);
-		}
-		| explist COMMA exp {
-			$$ = $1;
-			$$.children.push_back($3);
-		}
-		;
-
 function: FUNCTION funcbody {
 			$$ = Node("function","in-line");
 			$$.children.push_back($2);
@@ -329,7 +372,7 @@ functioncall: prefixexp args {
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 		}
-		| prefixexp COMMA name args {
+		| prefixexp COLON name args {
 			$$ = Node("functioncall","2");
 			$$.children.push_back($1);
 			$$.children.push_back($3);
@@ -365,9 +408,13 @@ parlist	: namelist {
 args	: PARANTHESES_L PARANTHESES_R {
 	 		$$ = Node("args","1");
 	 	}
-		| PARANTHESES_L parlist PARANTHESES_R {
+		| PARANTHESES_L explist PARANTHESES_R {
 			$$ = Node("args","2");
 			$$.children.push_back($2);
+		}
+		| tableconstructor {
+			$$ = Node("args","table");
+			$$.children.push_back($1);
 		}
 		| STRING {
 			$$ = Node("args",$1);
@@ -377,6 +424,9 @@ args	: PARANTHESES_L PARANTHESES_R {
 tableconstructor: BRACES_L fieldlist BRACES_R {
 			$$ = Node("tableconstructor","");
 			$$.children.push_back($2);
+		}
+		| BRACES_L BRACES_R {
+			$$ = Node("tableconstructor","empty");
 		}
 		;
 
@@ -396,15 +446,24 @@ field	: BRACKET_L exp BRACKET_R EQUALS exp {
 		}
 	  	;
 
-fieldlist: field {
+fieldlist: fieldlist2 optfieldsep {
+		 	$$ = $1;
 			$$ = Node("fieldlist","");
 			$$.children.push_back($1);
 		}
-		| fieldlist fieldsep field {
+		;
+
+fieldlist2: field {
+			$$.children.push_back($1);
+		}
+		| fieldlist2 fieldsep field {
 			$$ = $1;
 			$$.children.push_back($3);
 		}
 
+optfieldsep: fieldsep { $$ = $1; }
+		| /* empty */ {}
+		;
 
 fieldsep: COMMA {
 			$$ = Node("fieldsep",$1);
