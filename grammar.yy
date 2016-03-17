@@ -16,8 +16,8 @@
 
 %type <Node> block
 %type <Node> chunk
+%type <Node> chunk2
 %type <Node> stat
-%type <Node> optlaststat
 %type <Node> laststat
 
 
@@ -112,13 +112,21 @@ block	: chunk
 		}
 		;
 
-chunk	: stat optsemi optlaststat
-	   	{	
+chunk	: chunk2 laststat {
+	  		$$ = $1;
+			$$.children.push_back($2);
+	  	}
+		| chunk2 {
+	  		$$ = $1;
+		}
+		| laststat {
 			$$ = Node("Chunk","");
 			$$.children.push_back($1);
-			$$.children.push_back($3);
 		}
-		| laststat optsemi {
+		;
+
+chunk2	: stat optsemi
+	   	{	
 			$$ = Node("Chunk","");
 			$$.children.push_back($1);
 		}
@@ -132,15 +140,14 @@ optsemi	: SEMICOLON {}
 		| /* empty */
 		;
 
-optlaststat: laststat { $$ = $1; }
-		| /*empty */ {}
-		;
-
-laststat: RETURN explist {
-			$$ = Node("laststat","explist");
+laststat: RETURN explist optsemi {
+			$$ = Node("laststat","return explist");
 			$$.children.push_back($2);
 		}
-		| BREAK {
+		| RETURN optsemi {
+			$$ = Node("laststat","empty return");
+		}
+		| BREAK optsemi {
 			$$ = Node("laststat","break");
 			$$.children.push_back(Node("break",""));
 		}
