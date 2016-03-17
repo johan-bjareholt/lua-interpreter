@@ -4,24 +4,42 @@
 # This is essentially just a crash test, not a proper unit test
 #
 
-testpass=0
-testcount=0
+gtestpass=0
+gtestcount=0
 
-function test() {
-	testcount=$(($testcount+1))
-	cat $1 | ./lua
+function gtest() {
+	gtestcount=$(($gtestcount+1))
+	cat $1 | ./lua -p
 	if [ $? -eq 0 ]; then
-		testpass=$(($testpass+1))
+		gtestpass=$(($gtestpass+1))
 	else
 		failedtests=$failedtests$1
 	fi
 }
 
-test tests/comments.lua
-test tests/stat.lua
-test tests/asstest.lua
-test tests/longsdlcode.lua
-test tests/sockhttp.lua
-test tests/sockurl.lua
+gtest tests/grammar/comments.lua
+gtest tests/grammar/stat.lua
+gtest tests/grammar/asstest.lua
+gtest tests/grammar/longsdlcode.lua
+gtest tests/grammar/sockhttp.lua
+gtest tests/grammar/sockurl.lua
 
-printf "%d/%d tests passed\n" $testpass $testcount
+printf "%d/%d grammar tests passed\n" $gtestpass $gtestcount
+
+
+itestcount=0
+itestpass=0
+
+function itest(){
+	itestcount=$(($itestcount+1))
+	cat $1 | ./lua
+	if [ $? -eq 0 ]; then
+		itestpass=$(($itestpass+1))
+	else
+		failedtests=$failedtests$1
+	fi
+}
+
+itest tests/interpret/ass_d.lua
+
+printf "%d/%d interpretation tests passed\n" $itestpass $itestcount

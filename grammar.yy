@@ -53,6 +53,7 @@
 %type <Node> optfieldsep
 %type <Node> fieldsep
 
+%type <Node> string
 %type <Node> binop
 %type <Node> unop
 
@@ -161,7 +162,7 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($3);
 		}
 		| functioncall {
-			$$ = Node("stat","funcitoncall");
+			$$ = Node("stat","functioncall");
 			$$.children.push_back($1);
 		}
 		| DO block END {
@@ -302,12 +303,11 @@ funcname: funcname2 {
 		;
 
 funcname2: name {
-			$$ = Node("funcname","");
-			$$.children.push_back($1);
+			$$ = Node("funcname",$1.value);
 		}
 		| funcname2 DOT name {
 			$$ = $1;
-			$$.children.push_back($1);
+			$$.value = $$.value +"."+ $3.value;
 		}
 		;
 
@@ -325,16 +325,16 @@ exp		: NIL {
 	 		$$ = Node("exp", $1);
 	 	}
 	 	| FALSE {
-	 		$$ = Node("exp", $1);
+	 		$$ = Node("exp", "0");
 		}
 		| TRUE {
-	 		$$ = Node("exp", $1);
+	 		$$ = Node("exp", "1");
 		}
 		| NUMBER {
 			$$ = Node("exp", $1);
 		}
-		| STRING {
-			$$ = Node("exp", $1.substr(1,$1.length()-2));
+		| string {
+			$$ = $1; 
 		}
 		| TDOT {
 			$$ = Node("exp", $1);
@@ -344,21 +344,20 @@ exp		: NIL {
 			$$.children.push_back($1);
 		}
 		| prefixexp {
-			$$ = Node("exp","prefixexp");
-			$$.children.push_back($1);
+			$$ = $1;
 		}
 		| tableconstructor {
 			$$ = Node("exp","tableconstructor");
 			$$.children.push_back($1);
 		}
 		| exp binop exp {
-			$$ = Node("exp", "binoperation");
+			$$ = Node("exp", "binop");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 			$$.children.push_back($3);
 		}
 		| unop exp {
-			$$ = Node("exp","unop exp");
+			$$ = Node("exp","unop");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 		}
@@ -430,18 +429,16 @@ parlist	: namelist {
 		;
 
 args	: PARANTHESES_L PARANTHESES_R {
-	 		$$ = Node("args","1");
+	 		$$ = Node("explist","empty");
 	 	}
 		| PARANTHESES_L explist PARANTHESES_R {
-			$$ = Node("args","2");
-			$$.children.push_back($2);
+			$$ = $2;
 		}
 		| tableconstructor {
-			$$ = Node("args","table");
-			$$.children.push_back($1);
+			$$ = $1;
 		}
-		| STRING {
-			$$ = Node("args",$1);
+		| string {
+			$$ = $1;
 		}
 		;
 
@@ -472,12 +469,12 @@ field	: BRACKET_L exp BRACKET_R EQUALS exp {
 
 fieldlist: fieldlist2 optfieldsep {
 		 	$$ = $1;
-			$$ = Node("fieldlist","");
 			$$.children.push_back($1);
 		}
 		;
 
 fieldlist2: field {
+			$$ = Node("fieldlist","");
 			$$.children.push_back($1);
 		}
 		| fieldlist2 fieldsep field {
@@ -495,6 +492,11 @@ fieldsep: COMMA {
 		| SEMICOLON {
 			$$ = Node("fieldsep",$1);
 		}
+		;
+
+string	: STRING {
+	   		$$ = Node("str", $1.substr(1,$1.length()-2));
+	   	}
 		;
 
 binop	: BINOP {
