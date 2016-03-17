@@ -1,9 +1,11 @@
 %top{
     #include "grammar.tab.hh"
+	#include "globals.h"
     #define YY_DECL yy::parser::symbol_type yylex()
 
 	void log(std::string message, std::string text){
-		std::cout << message << ": " << text << std::endl;
+		if (debug_lex == true)
+			std::cout << message << ": " << text << std::endl;
 	}
 }
 

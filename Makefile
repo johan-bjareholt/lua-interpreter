@@ -1,8 +1,8 @@
 NAME=lua
 
 # Link & compile
-parser: lex.yy.c grammar.tab.o main.cc
-	g++ -g -o $(NAME) grammar.tab.o lex.yy.c main.cc
+parser: lex.yy.c grammar.tab.o main.cc node.cc
+	g++ -g -o $(NAME) grammar.tab.o lex.yy.c main.cc node.cc
 
 # Grammar
 grannar.tab.o: grammar.tab.cc

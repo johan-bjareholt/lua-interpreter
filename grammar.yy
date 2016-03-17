@@ -3,7 +3,8 @@
 %define api.value.type variant
 %define api.token.constructor
 %code requires{
-    #include "node.h"
+	#include "globals.h"
+	#include "node.h"
 }
 %code{
     #include <string>
