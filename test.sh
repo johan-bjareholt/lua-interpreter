@@ -19,6 +19,7 @@ function test() {
 
 test tests/comments.lua
 test tests/stat.lua
+test tests/asstest.lua
 test tests/longsdlcode.lua
 
 printf "%d/%d tests passed\n" $testpass $testcount
