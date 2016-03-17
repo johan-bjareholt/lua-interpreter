@@ -1,3 +1,9 @@
+--[[
+
+	This is taken from the mechani.se course site
+
+]]--
+
 -- D
 print(13+(22-11)/1*44)
 

@@ -1,3 +1,9 @@
+--[[
+
+	I have written this myself to test the stat grammar
+
+]]--
+
 -- assignment
 asd = 123
 asd1, asd2 = 234, 345
@@ -42,6 +48,12 @@ end
 for asd=123, asd<1, asd+1
 do
 	asd=321
+end
+
+-- for-in
+for asd, asd2 in testfunc()
+do
+	asd=456
 end
 
 -- function 

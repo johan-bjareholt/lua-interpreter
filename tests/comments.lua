@@ -1,3 +1,9 @@
+--[[
+
+	I have written this myself
+
+]]--
+
 -- single line comment
 
 --[[ single line multiline comment ]]--
