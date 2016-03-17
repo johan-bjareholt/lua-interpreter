@@ -21,5 +21,7 @@ test tests/comments.lua
 test tests/stat.lua
 test tests/asstest.lua
 test tests/longsdlcode.lua
+test tests/sockhttp.lua
+test tests/sockurl.lua
 
 printf "%d/%d tests passed\n" $testpass $testcount
