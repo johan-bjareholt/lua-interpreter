@@ -3,6 +3,8 @@
 	#include "globals.h"
     #define YY_DECL yy::parser::symbol_type yylex()
 
+	int linenr = 0;
+
 	void log(std::string message, std::string text){
 		if (debug_lex == true)
 			std::cout << message << ": " << text << std::endl;
@@ -74,7 +76,8 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 [\]]									{ log("bracket_r",yytext); return yy::parser::make_BRACKET_R(yytext); }
 
 
-[ \t\n]									{ /* spacing */}
+[ \t]									{ /* spacing */}
+[\n]									{ linenr++; }
 <<EOF>>                 				{ log("end", ""); return yy::parser::make_QUIT(); }
 
 %%

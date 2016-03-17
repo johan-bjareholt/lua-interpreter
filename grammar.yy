@@ -334,7 +334,7 @@ exp		: NIL {
 			$$ = Node("exp", $1);
 		}
 		| STRING {
-			$$ = Node("exp", $1);
+			$$ = Node("exp", $1.substr(1,$1.length()-2));
 		}
 		| TDOT {
 			$$ = Node("exp", $1);
