@@ -1,2 +1,2 @@
 #!/usr/bin/bash
-dot $1 -Tsvg -o test.svg
+dot $1 -Tpdf -o test.pdf
