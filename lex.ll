@@ -81,4 +81,7 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 <<EOF>>                 				{ log("end", ""); return yy::parser::make_QUIT(); }
 
 %%
-
+void set_input_file(char* filename)
+{
+	yyin = fopen(filename, "r");
+}

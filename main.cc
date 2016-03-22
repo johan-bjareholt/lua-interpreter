@@ -2,6 +2,7 @@
 #include <sstream>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
 #include "grammar.tab.hh"
 
 #include "globals.h"
@@ -18,6 +19,14 @@ void yy::parser::error(const std::string& err){
 
 void parse_flags(int argc, char** argv);
 void print_help();
+
+enum INPUT_MODES {
+	INPUT_STDIN,
+	INPUT_FILE,
+};
+
+int mode = INPUT_STDIN;
+char* filename = NULL;
 
 int main(int argc, char** argv){
 	parse_flags(argc, argv);
@@ -68,6 +77,15 @@ void parse_flags(int argc, char** argv){
 			}
 		}
 		else {
+			if (filename == NULL){
+				filename = argv[i];
+				mode = INPUT_FILE;
+				set_input_file(filename);
+			}
+			else {
+				std::cout << "Cannot have two files as input, exiting" << std::endl;
+				exit(0);
+			}
 		}
 	}
 }
@@ -75,7 +93,7 @@ void parse_flags(int argc, char** argv){
 void print_help(){
 	std::cout << "Name: lua-interpreter" <<
 	std::endl << "Author: Johan Bjäreholt" <<
-	std::endl << "Synopsis: lua [flag]" <<
+	std::endl << "Synopsis: lua [flag] [inputfile]" <<
 	std::endl << "Flags:" <<
 	std::endl << "  -e : output dotformat" <<
 	std::endl << "  -i : interpret code (default)" <<
