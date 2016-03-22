@@ -17,6 +17,7 @@ void yy::parser::error(const std::string& err){
 }
 
 void parse_flags(int argc, char** argv);
+void print_help();
 
 int main(int argc, char** argv){
 	parse_flags(argc, argv);
@@ -50,20 +51,34 @@ void parse_flags(int argc, char** argv){
 					output_dotfile = true;
 					interpret = false;
 					break;
-				case 'p':
-					output_dotfile = false;
-					interpret = false;
+				case 'i':
 					break;
 				case 'd':
 					debug_lex = true;
 					debug_grammar = true;
+				case 'h':
+					print_help();
+					exit(0);
 				INVALID_FLAG:
 				default:
-					std::cout << "Invalid flag" << std::endl;
+					std::cout << "Invalid flag" << std::endl
+							  << "use the -h flag for help" << std::endl;
+					exit(0);
 					break;
 			}
 		}
 		else {
 		}
 	}
+}
+
+void print_help(){
+	std::cout << "Name: lua-interpreter" <<
+	std::endl << "Author: Johan Bjäreholt" <<
+	std::endl << "Synopsis: lua [flag]" <<
+	std::endl << "Flags:" <<
+	std::endl << "  -e : output dotformat" <<
+	std::endl << "  -i : interpret code (default)" <<
+	std::endl << "  -d : debug lex and grammar" <<
+	std::endl;
 }
