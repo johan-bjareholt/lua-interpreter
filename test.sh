@@ -9,7 +9,7 @@ gtestcount=0
 
 function gtest() {
 	gtestcount=$(($gtestcount+1))
-	cat $1 | ./lua -p
+	cat $1 | ./lua -s
 	if [ $? -eq 0 ]; then
 		gtestpass=$(($gtestpass+1))
 	else

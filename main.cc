@@ -60,11 +60,18 @@ void parse_flags(int argc, char** argv){
 					output_dotfile = true;
 					interpret = false;
 					break;
+				case 's':
+					output_dotfile = false;
+					debug_lex = false;
+					debug_grammar = false;
+					interpret = false;
+					break;
 				case 'i':
 					break;
 				case 'd':
 					debug_lex = true;
 					debug_grammar = true;
+					break;
 				case 'h':
 					print_help();
 					exit(0);
@@ -97,6 +104,7 @@ void print_help(){
 	std::endl << "Flags:" <<
 	std::endl << "  -e : output dotformat" <<
 	std::endl << "  -i : interpret code (default)" <<
+	std::endl << "  -s : silent" <<
 	std::endl << "  -d : debug lex and grammar" <<
 	std::endl;
 }

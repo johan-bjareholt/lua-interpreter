@@ -33,8 +33,15 @@ void Node::interpret(){
 					if (funcname == "print"){
 						std::list<Node>::iterator si = fcall.children.begin();
 						si++;
-						if (si->tag == "str")
-							std::cout << si->value << std::endl;
+						if (si->tag == "explist"){
+							Node& par1 = (*si->children.begin());
+							if (par1.tag == "str"){
+								std::cout << par1.value << std::endl;
+							}
+							else if (par1.tag == "exp"){
+								std::cout << par1.value << std::endl;
+							}
+						}
 					}
 				}
 			}
@@ -48,7 +55,7 @@ void Node::interpret(){
 			Node& op = *i;
 			i++;
 			Node& v2 = *i;
-			std::cout << v1.value << op.value << v2.value << std::endl;
+			//std::cout << v1.value << op.value << v2.value << std::endl;
 			int result;
 			if (op.value == "+")
 				result = std::stoi(v1.value) + std::stoi(v2.value);
@@ -90,7 +97,7 @@ void Node::interpret(){
 				std::cout << "Fatal parsing error, invalid operator" << std::endl;
 				exit(-1);
 			}
-			std::cout << result << std::endl;
+			//std::cout << result << std::endl;
 
 			value = std::to_string(result);
 			children.clear();
