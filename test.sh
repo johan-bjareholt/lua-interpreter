@@ -9,10 +9,12 @@ gtestcount=0
 
 function gtest() {
 	gtestcount=$(($gtestcount+1))
-	cat $1 | ./lua -s
+	echo "Grammar testing $1"
+	./lua -s $1
 	if [ $? -eq 0 ]; then
 		gtestpass=$(($gtestpass+1))
 	else
+		echo "FAILED: grammar test $1"
 		failedtests=$failedtests$1
 	fi
 }
@@ -32,14 +34,17 @@ itestpass=0
 
 function itest(){
 	itestcount=$(($itestcount+1))
-	cat $1 | ./lua
+	echo "Interpretation testing $1"
+	./lua $1
 	if [ $? -eq 0 ]; then
 		itestpass=$(($itestpass+1))
 	else
+		echo "FAILED: interpretation test $1"
 		failedtests=$failedtests$1
 	fi
 }
 
 itest tests/interpret/ass_d.lua
+itest tests/interpret/ass_c.lua
 
 printf "%d/%d interpretation tests passed\n" $itestpass $itestcount

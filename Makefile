@@ -1,13 +1,15 @@
 NAME=lua
-CPPFLAGS=--std=c++11
+CPPFLAGS=-g --std=c++11
+
+SRC=main.cc node.cc vartable.cc
 
 # Link & compile
 parser: lex.yy.c grammar.tab.o main.cc node.cc
-	g++ -g -o $(NAME) $(CPPFLAGS) grammar.tab.o lex.yy.c main.cc node.cc
+	g++ $(CPPFLAGS) -o $(NAME) $(SRC) grammar.tab.o lex.yy.c
 
 # Grammar
-grannar.tab.o: grammar.tab.cc
-	g++ -g -c grammar.tab.cc
+grammar.tab.o: grammar.tab.cc
+	g++ $(CPPFLAGS) -c grammar.tab.cc
 grammar.tab.cc: grammar.yy
 	bison grammar.yy
 

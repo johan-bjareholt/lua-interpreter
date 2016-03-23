@@ -1,5 +1,6 @@
 #pragma once
 #include "node.h"
+#include "vartable.h"
 
 extern void set_input_file(char*);
 
@@ -9,3 +10,5 @@ extern int linenr;
 
 extern bool debug_lex;
 extern bool debug_grammar;
+
+extern VarTable* vartable;

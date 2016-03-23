@@ -1,5 +1,6 @@
 #include "node.h"
 #include "globals.h"
+#include "vartable.h"
 
 #include <iostream>
 #include <string>
@@ -17,6 +18,12 @@ Node::Node() {
 	tag="uninitialised";
 	value="uninitialised";
 } // Bison needs a default constructor.
+
+void Node::operator==(Node& node){
+	line = node.line;
+	tag = node.tag;
+	value = node.tag;
+}
 
 
 void Node::interpret(){
@@ -38,16 +45,45 @@ void Node::interpret(){
 							if (par1.tag == "str"){
 								std::cout << par1.value << std::endl;
 							}
-							else if (par1.tag == "exp"){
+							else if (par1.tag == "int"){
 								std::cout << par1.value << std::endl;
+							}
+							else if (par1.tag == "var" && par1.value == "name"){
+								std::string varname = par1.children.front().value;
+								Node* node = vartable->getvar(varname);
+								if (node == nullptr){
+									std::cout << "Variable " << varname << " is not defined" << std::endl;
+									exit(-1);
+								}
+								std::cout << node->value << std::endl;
 							}
 						}
 					}
 				}
 			}
 		}
+		else if (value == "assignment"){
+			std::list<Node>& vars = children.front().children;
+			std::list<Node>& vals = children.back().children;
+			std::list<Node>::iterator variter = vars.begin();
+			std::list<Node>::iterator valiter = vals.begin();
+			while (variter != vars.end() && valiter != vals.end()){
+				std::cout << (*variter).tag << "=" << (*valiter).tag << std::endl;
+				if ((*variter).tag == "var" && (*variter).value == "name"){
+					std::string varname = (*variter).children.front().value;
+					vartable->addvar(varname, (*valiter));
+				}
+				else {
+					std::cout << "Invalid assignment, value needs to be assigned to a variable" << std::endl;
+					exit(-1);
+				}
+
+				variter++;
+				valiter++;
+			}
+		}
 	}
-	else if (tag == "exp"){
+	else if (tag == "op"){
 		if (value == "binop"){
 			std::list<Node>::iterator i = children.begin();
 			Node& v1 = *i;
@@ -55,6 +91,28 @@ void Node::interpret(){
 			Node& op = *i;
 			i++;
 			Node& v2 = *i;
+			if (v1.tag == "var" && v1.value == "name"){
+				Node* v1ptr = vartable->getvar(v1.children.front().value);
+				if (v1ptr == nullptr){
+					std::cout << "The variable " << v1.value << " is not defined" << std::endl;
+					exit(-1);
+				}
+				v1 = *v1ptr;
+				std::cout << v1.tag << std::endl;
+			}
+			if (v2.tag == "var" && v2.value == "name"){
+				Node* v2ptr = vartable->getvar(v2.children.front().value);
+				if (v2ptr == nullptr){
+					std::cout << "The variable " << v1.value << " is not defined" << std::endl;
+					exit(-1);
+				}
+				v2 = *v2ptr;
+				std::cout << v2.tag << std::endl;
+			}
+			if (v1.tag != "int" || v2.tag != "int"){
+				std::cout << "Cannot calculate on something that is not a number" << std::endl;
+				exit(-1);
+			}
 			//std::cout << v1.value << op.value << v2.value << std::endl;
 			int result;
 			if (op.value == "+")
@@ -100,6 +158,7 @@ void Node::interpret(){
 			//std::cout << result << std::endl;
 
 			value = std::to_string(result);
+			tag = "int";
 			children.clear();
 		}
 	}

@@ -6,6 +6,7 @@
 #include "grammar.tab.hh"
 
 #include "globals.h"
+#include "vartable.h"
 
 bool debug_lex = false;
 bool debug_grammar = false;
@@ -19,6 +20,7 @@ void yy::parser::error(const std::string& err){
 
 void parse_flags(int argc, char** argv);
 void print_help();
+void setup();
 
 enum INPUT_MODES {
 	INPUT_STDIN,
@@ -28,8 +30,11 @@ enum INPUT_MODES {
 int mode = INPUT_STDIN;
 char* filename = NULL;
 
+VarTable* vartable;
+
 int main(int argc, char** argv){
 	parse_flags(argc, argv);
+	setup();
 	yy::parser parser;
 	if (!parser.parse()){
 		std::stringstream ss;
@@ -48,6 +53,12 @@ int main(int argc, char** argv){
 		}
 	}
     return 0;
+}
+
+void setup(){
+	if (interpret == true){
+		vartable = new VarTable();
+	}
 }
 
 

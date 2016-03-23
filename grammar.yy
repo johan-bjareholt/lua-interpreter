@@ -322,16 +322,16 @@ namelist: name {
 		;
 
 exp		: NIL {
-	 		$$ = Node("exp", $1);
+	 		$$ = Node("nil", $1);
 	 	}
 	 	| FALSE {
-	 		$$ = Node("exp", "0");
+	 		$$ = Node("int", "0");
 		}
 		| TRUE {
-	 		$$ = Node("exp", "1");
+	 		$$ = Node("int", "1");
 		}
 		| NUMBER {
-			$$ = Node("exp", $1);
+			$$ = Node("int", $1);
 		}
 		| string {
 			$$ = $1; 
@@ -351,13 +351,13 @@ exp		: NIL {
 			$$.children.push_back($1);
 		}
 		| exp binop exp {
-			$$ = Node("exp", "binop");
+			$$ = Node("op", "binop");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 			$$.children.push_back($3);
 		}
 		| unop exp {
-			$$ = Node("exp","unop");
+			$$ = Node("op","unop");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 		}
