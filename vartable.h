@@ -28,5 +28,5 @@ class VarTable {
 		VarTable();
 		void addvar(std::string name, Node& value);
 		bool delvar(std::string name);
-		Node* getvar(std::string name);
+		Node& getvar(std::string name);
 };

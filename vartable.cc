@@ -48,7 +48,7 @@ bool VarTable::delvar(std::string name){
 	return found;
 }
 
-Node* VarTable::getvar(std::string name){
+Node& VarTable::getvar(std::string name){
 	int hash = genhash(name);
 	TableEntry* te = hashtable[hash];
 	Node* vnode = nullptr;
@@ -62,5 +62,9 @@ Node* VarTable::getvar(std::string name){
 			te = te->next;
 		}
 	}
-	return vnode;
+	if (vnode == nullptr){
+		std::cout << "Variable " << name << " is not defined" << std::endl;
+		exit(-1);
+	}
+	return *vnode;
 }

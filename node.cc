@@ -50,12 +50,8 @@ void Node::interpret(){
 							}
 							else if (par1.tag == "var" && par1.value == "name"){
 								std::string varname = par1.children.front().value;
-								Node* node = vartable->getvar(varname);
-								if (node == nullptr){
-									std::cout << "Variable " << varname << " is not defined" << std::endl;
-									exit(-1);
-								}
-								std::cout << node->value << std::endl;
+								Node& node = vartable->getvar(varname);
+								std::cout << node.value << std::endl;
 							}
 						}
 					}
@@ -92,21 +88,11 @@ void Node::interpret(){
 			i++;
 			Node& v2 = *i;
 			if (v1.tag == "var" && v1.value == "name"){
-				Node* v1ptr = vartable->getvar(v1.children.front().value);
-				if (v1ptr == nullptr){
-					std::cout << "The variable " << v1.value << " is not defined" << std::endl;
-					exit(-1);
-				}
-				v1 = *v1ptr;
+				v1 = vartable->getvar(v1.children.front().value);
 				std::cout << v1.tag << std::endl;
 			}
 			if (v2.tag == "var" && v2.value == "name"){
-				Node* v2ptr = vartable->getvar(v2.children.front().value);
-				if (v2ptr == nullptr){
-					std::cout << "The variable " << v1.value << " is not defined" << std::endl;
-					exit(-1);
-				}
-				v2 = *v2ptr;
+				v2 = vartable->getvar(v2.children.front().value);
 				std::cout << v2.tag << std::endl;
 			}
 			if (v1.tag != "int" || v2.tag != "int"){
