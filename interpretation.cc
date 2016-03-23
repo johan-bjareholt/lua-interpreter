@@ -89,10 +89,18 @@ void Node::interpret(){
 			if (children.size() >= 1){
 				std::list<Node>::iterator si = children.begin();
 				// Get func name
-				Node& funcnamecontainer = (*si);
-				std::string funcname;
-				if (funcnamecontainer.tag == "var" && funcnamecontainer.value == "name")
-					funcname = (*funcnamecontainer.children.begin()).value;
+				Node& namecontainer = (*si);
+				if (namecontainer.tag != "var" || namecontainer.value != "name"){
+					std::cout << "Parser error, invalid function name" << std::endl;
+					exit(-1);
+				}
+				auto nameiter = namecontainer.children.begin();
+				std::string funcname = (*nameiter).value;
+				nameiter++;
+				while (nameiter != namecontainer.children.end()){
+					funcname += "." + (*nameiter).value;
+					nameiter++;
+				}
 
 				// Get arguments
 				si++;
@@ -131,7 +139,9 @@ void Node::interpret(){
 					value = "";
 				}
 				else if (funcname == "io.read"){
-					
+					std::getline(std::cin, value);
+					// Return
+					tag = "str";
 				}
 				else {
 					std::cout << "Undefined function" << std::endl;
