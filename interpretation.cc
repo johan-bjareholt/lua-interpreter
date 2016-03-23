@@ -80,58 +80,68 @@ void Node::interpret(){
 	{
 		for(std::list<Node>::iterator i=children.begin(); i!=children.end(); i++)
         	(*i).interpret();
-		if (tag == "stat"){
-			if (value == "functioncall"){
-				Node& fcall = children.front();
-				if (fcall.children.size() >= 1){
-					std::list<Node>::iterator si = fcall.children.begin();
-					// Get func name
-					Node& funcnamecontainer = (*si);
-					std::string funcname;
-					if (funcnamecontainer.tag == "var" && funcnamecontainer.value == "name")
-						funcname = (*funcnamecontainer.children.begin()).value;
-	
-					// Get arguments
-					si++;
-					std::list<Node*> params;
-					if (si->tag == "explist"){
-						for (auto iter=si->children.begin(); iter != si->children.end(); iter++)
-							params.push_back(&(*iter));
-					}
-					else if (si->tag == "str" || si->tag == "int")
-						params.push_back(&(*si));
-					else {
-						std::cout << "Invalid parameters to function" << std::endl;
+
+		if (tag == "functioncall"){
+			if (value == "2"){
+				std::cout << "This type of function call is not supported" << std::endl;
+				exit(-1);
+			}
+			if (children.size() >= 1){
+				std::list<Node>::iterator si = children.begin();
+				// Get func name
+				Node& funcnamecontainer = (*si);
+				std::string funcname;
+				if (funcnamecontainer.tag == "var" && funcnamecontainer.value == "name")
+					funcname = (*funcnamecontainer.children.begin()).value;
+
+				// Get arguments
+				si++;
+				std::list<Node*> params;
+				if (si->tag == "explist"){
+					for (auto iter=si->children.begin(); iter != si->children.end(); iter++)
+						params.push_back(&(*iter));
+				}
+				else if (si->tag == "str" || si->tag == "int")
+					params.push_back(&(*si));
+				else {
+					std::cout << "Invalid parameters to function" << std::endl;
+					exit(-1);
+				}
+
+				// Call function
+				if (funcname == "print" || funcname == "io.write"){
+					if (params.empty()){
+						std::cout << "Print function needs an argument" << std::endl;
 						exit(-1);
 					}
-	
-					// Call function
-					if (funcname == "print" || funcname == "io.write"){
-						if (params.empty()){
-							std::cout << "Print function needs an argument" << std::endl;
-							exit(-1);
+					for (auto pariter = params.begin(); pariter != params.end(); pariter++){
+						Node& par = *(*pariter);
+						if (par.tag == "str" || par.tag == "int"){
+							std::cout << par.value;
 						}
-						Node& par1 = *params.front();
-						if (par1.tag == "str"){
-							std::cout << par1.value << std::endl;
-						}
-						else if (par1.tag == "int"){
-							std::cout << par1.value << std::endl;
-						}
-						else if (par1.tag == "var" && par1.value == "name"){
-							std::string varname = par1.children.front().value;
+						else if (par.tag == "var" && par.value == "name"){
+							std::string varname = par.children.front().value;
 							Node& node = vartable->getvar(varname);
-							std::cout << node.value << std::endl;
+							std::cout << node.value;
 						}
 					}
-					else {
-						std::cout << "Undefined function" << std::endl;
-						exit(-1);
-					}
+					std::cout << std::endl;
+					// Return
+					tag = "NIL";
+					value = "";
+				}
+				else if (funcname == "io.read"){
+					
+				}
+				else {
+					std::cout << "Undefined function" << std::endl;
+					exit(-1);
 				}
 			}
-			
-			else if (value == "assignment"){
+			children.clear();
+		}
+		else if (tag == "stat"){
+			if (value == "assignment"){
 				std::list<Node>& vars = children.front().children;
 				std::list<Node>& vals = children.back().children;
 				std::list<Node>::iterator variter = vars.begin();
