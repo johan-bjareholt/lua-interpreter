@@ -186,14 +186,14 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($3);
 		}
 		| FOR name EQUALS exp COMMA exp DO block END {
-			$$ = Node("stat","for, 2var");
+			$$ = Node("stat","for,2var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 			$$.children.push_back($6);
 			$$.children.push_back($8);
 		}
 		| FOR name EQUALS exp COMMA exp COMMA exp DO block END {
-			$$ = Node("stat","for, 3var");
+			$$ = Node("stat","for,3var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 			$$.children.push_back($6);

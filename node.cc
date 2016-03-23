@@ -7,7 +7,6 @@
 #include <sstream>
 #include <list>
 
-
 Node::Node(std::string t, std::string v) : tag(t), value(v){
 	line = linenr;
 }
@@ -31,30 +30,51 @@ void Node::interpret(){
         (*i).interpret();
 	if (tag == "stat"){
 		if (value == "functioncall"){
-			//std::cout << "functioncall"<< children.size() << std::endl;
 			Node& fcall = children.front();
 			if (fcall.children.size() >= 1){
-				Node& funcnamecontainer = (*fcall.children.begin());
-				if (funcnamecontainer.tag == "var" && funcnamecontainer.value == "name"){
-					std::string& funcname = (*funcnamecontainer.children.begin()).value;
-					if (funcname == "print"){
-						std::list<Node>::iterator si = fcall.children.begin();
-						si++;
-						if (si->tag == "explist"){
-							Node& par1 = (*si->children.begin());
-							if (par1.tag == "str"){
-								std::cout << par1.value << std::endl;
-							}
-							else if (par1.tag == "int"){
-								std::cout << par1.value << std::endl;
-							}
-							else if (par1.tag == "var" && par1.value == "name"){
-								std::string varname = par1.children.front().value;
-								Node& node = vartable->getvar(varname);
-								std::cout << node.value << std::endl;
-							}
-						}
+				std::list<Node>::iterator si = fcall.children.begin();
+				// Get func name
+				Node& funcnamecontainer = (*si);
+				std::string funcname;
+				if (funcnamecontainer.tag == "var" && funcnamecontainer.value == "name")
+					funcname = (*funcnamecontainer.children.begin()).value;
+
+				// Get arguments
+				si++;
+				std::list<Node*> params;
+				if (si->tag == "explist"){
+					for (auto iter=si->children.begin(); iter != si->children.end(); iter++)
+						params.push_back(&(*iter));
+				}
+				else if (si->tag == "str" || si->tag == "int")
+					params.push_back(&(*si));
+				else {
+					std::cout << "Invalid parameters to function" << std::endl;
+					exit(-1);
+				}
+
+				// Call function
+				if (funcname == "print"){
+					if (params.empty()){
+						std::cout << "Print function needs an argument" << std::endl;
+						exit(-1);
 					}
+					Node& par1 = *params.front();
+					if (par1.tag == "str"){
+						std::cout << par1.value << std::endl;
+					}
+					else if (par1.tag == "int"){
+						std::cout << par1.value << std::endl;
+					}
+					else if (par1.tag == "var" && par1.value == "name"){
+						std::string varname = par1.children.front().value;
+						Node& node = vartable->getvar(varname);
+						std::cout << node.value << std::endl;
+					}
+				}
+				else {
+					std::cout << "Undefined function" << std::endl;
+					exit(-1);
 				}
 			}
 		}
