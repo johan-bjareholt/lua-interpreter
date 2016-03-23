@@ -22,6 +22,10 @@ void Node::interpret(){
 
 			// Get start value
 			si++;
+			if ((*si).tag == "var" && (*si).value == "name"){
+				std::string varname = (*si).children.front().value;
+				(*si) = vartable->getvar(varname);
+			}
 			if ((*si).tag != "int"){
 				std::cout << "Invalid start range in for loop" << std::endl;
 				exit(-1);
@@ -30,6 +34,11 @@ void Node::interpret(){
 
 			// Get end value
 			si++;
+			if ((*si).tag == "var" && (*si).value == "name"){
+				std::string varname = (*si).children.front().value;
+				(*si) = vartable->getvar(varname);
+			}
+			std::cout << (*si).tag << "," << (*si).value << std::endl;
 			if ((*si).tag != "int"){
 				std::cout << "Invalid end range in for loop" << std::endl;
 				exit(-1);
@@ -124,7 +133,10 @@ void Node::interpret(){
 					}
 					for (auto pariter = params.begin(); pariter != params.end(); pariter++){
 						Node& par = *(*pariter);
-						if (par.tag == "str" || par.tag == "int"){
+						if (par.tag == "str"){
+							std::cout << par.value;
+						}
+						else if (par.tag == "int"){
 							std::cout << par.value;
 						}
 						else if (par.tag == "var" && par.value == "name"){
@@ -133,15 +145,34 @@ void Node::interpret(){
 							std::cout << node.value;
 						}
 					}
-					std::cout << std::endl;
 					// Return
 					tag = "NIL";
 					value = "";
 				}
 				else if (funcname == "io.read"){
 					std::getline(std::cin, value);
-					// Return
+					int len = -1;
 					tag = "str";
+					if (params.size() != 0){
+						Node& par1 = *(params.front());
+						if (par1.tag == "str"){
+							if (par1.value == "*number")
+								tag = "int";
+							else {
+								std::cout << "This io.read function is not supported" << std::endl;
+								exit(-1);
+							}
+						}
+						else if (par1.tag == "int"){
+							std::cout << "Variable length input is not supported by io.read" << std::endl;
+							exit(-1);
+						}
+						else {
+							std::cout << "Invalid io.read argument" << std::endl;
+						}
+					}
+
+					// Return
 				}
 				else {
 					std::cout << "Undefined function" << std::endl;
