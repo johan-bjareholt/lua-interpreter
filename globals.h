@@ -10,5 +10,6 @@ extern int linenr;
 
 extern bool debug_lex;
 extern bool debug_grammar;
+extern bool debug_interpretation;
 
 extern VarTable* vartable;

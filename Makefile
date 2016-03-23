@@ -1,7 +1,7 @@
 NAME=lua
 CPPFLAGS=-g --std=c++11
 
-SRC=main.cc node.cc vartable.cc
+SRC=main.cc node.cc vartable.cc interpretation.cc
 
 # Link & compile
 parser: lex.yy.c grammar.tab.o main.cc node.cc

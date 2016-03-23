@@ -1,7 +1,21 @@
 #include <iostream>
 
+#include "globals.h"
 #include "vartable.h"
 
+/*
+   Table Entry
+*/
+
+TableEntry::TableEntry(std::string name, Node& value, TableEntry* next) {
+	this->name	= name;
+	this->value	= value;
+	this->next	= next;
+}
+
+/*
+	VarTable 
+*/
 
 VarTable::VarTable(){
 	for (int i=0; i<HTSIZE; i++)
@@ -16,15 +30,25 @@ int VarTable::genhash(std::string name){
 	return hash;
 }
 
-void VarTable::addvar(std::string name, Node& value){
+void VarTable::setvar(std::string name, Node& value){
 	int hash = genhash(name);
 	// Copy
-	TableEntry* tableentry = new TableEntry(name, value);
-	// Add to hashtable
-	if (hashtable[hash] != nullptr)
-		tableentry->next = hashtable[hash];
-	hashtable[hash] = tableentry;
-	std::cout << "Added variable " << name << std::endl;
+	TableEntry* tableentry = gettableentry(name);
+	if (tableentry != nullptr){
+		// Replace variable
+		tableentry->value = value;
+		if (debug_interpretation)
+			std::cout << "Reassigned variable " << name << std::endl;
+	}
+	else {
+		// Add to hashtable
+		tableentry = new TableEntry(name, value);
+		if (hashtable[hash] != nullptr)
+			tableentry->next = hashtable[hash];
+		hashtable[hash] = tableentry;
+		if (debug_interpretation)
+			std::cout << "Added variable " << name << std::endl;
+	}
 }
 
 bool VarTable::delvar(std::string name){
@@ -36,9 +60,13 @@ bool VarTable::delvar(std::string name){
 		Node* vnode = &te->value;
 		if (te->name == name){
 			found = true;
-			prev->next = te->next;
-			std::cout << "Deleted variable " << name << std::endl;
+			if (prev != nullptr)
+				prev->next = te->next;
+			else
+				hashtable[hash] = te->next;
 			delete te;
+			if (debug_interpretation)
+				std::cout << "Deleted variable " << name << std::endl;
 		}
 		else {
 			prev = te;
@@ -48,7 +76,7 @@ bool VarTable::delvar(std::string name){
 	return found;
 }
 
-Node& VarTable::getvar(std::string name){
+TableEntry* VarTable::gettableentry(std::string name){
 	int hash = genhash(name);
 	TableEntry* te = hashtable[hash];
 	Node* vnode = nullptr;
@@ -62,9 +90,14 @@ Node& VarTable::getvar(std::string name){
 			te = te->next;
 		}
 	}
-	if (vnode == nullptr){
+	return te;
+}
+
+Node& VarTable::getvar(std::string name){
+	TableEntry* te = gettableentry(name);
+	if (te == nullptr){
 		std::cout << "Variable " << name << " is not defined" << std::endl;
 		exit(-1);
 	}
-	return *vnode;
+	return te->value;
 }

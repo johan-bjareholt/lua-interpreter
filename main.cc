@@ -10,6 +10,7 @@
 
 bool debug_lex = false;
 bool debug_grammar = false;
+bool debug_interpretation = false;
 bool output_dotfile = false;
 bool interpret = true;
 
@@ -77,11 +78,19 @@ void parse_flags(int argc, char** argv){
 					debug_grammar = false;
 					interpret = false;
 					break;
+				case 'l':
+					debug_lex = true;
+					break;
+				case 'g':
+					debug_grammar = true;
+					break;
 				case 'i':
+					debug_interpretation = true;
 					break;
 				case 'd':
 					debug_lex = true;
 					debug_grammar = true;
+					debug_interpretation = true;
 					break;
 				case 'h':
 					print_help();
@@ -114,8 +123,10 @@ void print_help(){
 	std::endl << "Synopsis: lua [flag] [inputfile]" <<
 	std::endl << "Flags:" <<
 	std::endl << "  -e : output dotformat" <<
-	std::endl << "  -i : interpret code (default)" <<
-	std::endl << "  -s : silent" <<
-	std::endl << "  -d : debug lex and grammar" <<
+	std::endl << "  -s : silent parse" <<
+	std::endl << "  -l : debug lex" <<
+	std::endl << "  -g : debug grammar" <<
+	std::endl << "  -i : debug interpretation" <<
+	std::endl << "  -d : debug all" <<
 	std::endl;
 }

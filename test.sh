@@ -46,5 +46,6 @@ function itest(){
 
 itest tests/interpret/ass_d.lua
 itest tests/interpret/ass_c.lua
+itest tests/interpret/for.lua
 
 printf "%d/%d interpretation tests passed\n" $itestpass $itestcount
