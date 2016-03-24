@@ -125,6 +125,14 @@ void Node::interpret(){
 				elsenode.interpret();
 			}
 		}
+		else if (value == "function"){
+			earlymatch = true;
+			std::string funcname = children.front().value;
+			Node& funcdef = children.back();
+			vartable->setvar(funcname, funcdef);
+			if (debug_interpretation)
+				std::cout << "Defined function " << funcname << std::endl;
+		}
 	}
 	EARLYMATCHEND:
 	if (earlymatch == false)
@@ -219,8 +227,50 @@ void Node::interpret(){
 					// Return
 				}
 				else {
-					std::cout << "Undefined function" << std::endl;
-					exit(-1);
+					Node& funcdef = vartable->getvar(funcname);
+					if (funcdef.tag != "funcbody"){
+						std::cout << funcname << " is not a funcion" << std::endl;
+						exit(-1);
+					}
+					Node& parlist = funcdef.children.front().children.front();
+					Node& funcbody = funcdef.children.back();
+					
+					auto argsiter = params.begin();
+					auto pariter = parlist.children.begin();
+					while (pariter != parlist.children.end() && argsiter != params.end()){
+						// Get name
+						std::string argname = (*pariter).value;
+						// Get argument
+						Node& arg = *(*argsiter);
+
+						/*if (arg.tag == "var" && arg.value == "name"){
+							arg = vartable->getvar(arg.children.front().value);
+						}*/
+						arg.interpret();
+						vartable->setvar(argname, arg);
+						if (debug_interpretation)
+							std::cout << argname << "=" << arg.tag << ":" << arg.value << std::endl;
+						
+						// Next iteration
+						argsiter++;
+						pariter++;
+					}
+					if (pariter != parlist.children.end()){
+						std::cout << "Function needs more arguments" << std::endl;
+						exit(-1);
+					}
+					if (argsiter != params.end()){
+						std::cout << "Function has too many arguments" << std::endl;
+						exit(-1);
+					}
+
+					Node copy = funcbody;
+					copy.interpret();
+
+					for (pariter = parlist.children.begin(); pariter != parlist.children.end(); pariter++){
+						std::string argname = (*pariter).value;
+						vartable->delvar(argname);
+					}
 				}
 			}
 			children.clear();
