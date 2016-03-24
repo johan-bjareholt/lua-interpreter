@@ -84,7 +84,49 @@ void Node::interpret(){
 
 			vartable->delvar(varname);
 		}
+		else if (value == "if-elseif-else"){
+			earlymatch = true;
+			if (debug_interpretation)
+				std::cout << "if-elseif-else" << std::endl;
+			auto si = children.begin();
+			// If
+			Node& ifnode = (*si);
+			// Else if
+			si++;
+			Node& ifcontainer = (*si);
+			// Add if to front of elseif container
+			ifcontainer.children.push_front(ifnode);
+			// Go through ifs
+			for (auto ifiter = ifcontainer.children.begin(); ifiter != ifcontainer.children.end(); ifiter++){
+				Node& node = (*ifiter);
+				Node& ifcondition = node.children.front();
+				if (ifcondition.tag == "var" && ifcondition.value == "name"){
+					std::string varname = ifcondition.children.front().value;
+					ifcondition = vartable->getvar(varname);
+				}
+				else if (ifcondition.tag == "op" || ifcondition.tag == "functioncall"){
+					ifcondition.interpret();
+				}
+				//std::cout << ifcondition.tag <<":"<< ifcondition.value << std::endl;
+				if (ifcondition.tag != "int"){
+					std::cout << "Invalid if condition" << std::endl;
+					exit(-1);
+				}
+				if (std::stoi(ifcondition.value) > 0){
+					Node& ifblock = node.children.back();
+					ifblock.interpret();
+					goto EARLYMATCHEND;
+				}
+			}
+			// Else
+			si++;
+			Node& elsenode = (*si);
+			if (elsenode.value != "empty"){
+				elsenode.interpret();
+			}
+		}
 	}
+	EARLYMATCHEND:
 	if (earlymatch == false)
 	{
 		for(std::list<Node>::iterator i=children.begin(); i!=children.end(); i++)
@@ -145,6 +187,8 @@ void Node::interpret(){
 							std::cout << node.value;
 						}
 					}
+					if (funcname == "print")
+						std::cout << std::endl;
 					// Return
 					tag = "NIL";
 					value = "";
@@ -212,6 +256,7 @@ void Node::interpret(){
 				Node& op = *i;
 				i++;
 				Node& v2 = *i;
+				//std::cout << v1.value << "," << v2.value << std::endl;
 				if (v1.tag == "var" && v1.value == "name")
 					v1 = vartable->getvar(v1.children.front().value);
 				if (v2.tag == "var" && v2.value == "name")
@@ -221,43 +266,55 @@ void Node::interpret(){
 					exit(-1);
 				}
 				//std::cout << v1.value << op.value << v2.value << std::endl;
+				int val1 = std::stoi(v1.value);
+				int val2 = std::stoi(v2.value);
 				int result;
 				if (op.value == "+")
-					result = std::stoi(v1.value) + std::stoi(v2.value);
+					result = val1 + val2;
 				else if (op.value == "-")
-					result = std::stoi(v1.value) - std::stoi(v2.value);
+					result = val1 - val2;
 				else if (op.value == "*")
-					result = std::stoi(v1.value) * std::stoi(v2.value);
-				else if (op.value == "/")
-					result = std::stoi(v1.value) / std::stoi(v2.value);
+					result = val1 * val2;
+				else if (op.value == "/"){
+					if (val2 == 0){
+						std::cout << "Division by zero" << std::endl;
+						exit(-1);
+					}
+					result = val1 / val2;
+				}
 				else if (op.value == "^"){
 					std::cout << "operator ^ is not implemented" << std::endl;
 					exit(-1);
 				}
-				else if (op.value == "%")
-					result = std::stoi(v1.value) % std::stoi(v2.value);
+				else if (op.value == "%"){
+					if (val2 == 0){
+						std::cout << "Division by zero for modulo" << std::endl;
+						exit(-1);
+					}
+					result = val1 % val2;
+				}
 				else if (op.value == "<")
-					result = std::stoi(v1.value) < std::stoi(v2.value);
+					result = val1 < val2;
 				else if (op.value == ">")
-					result = std::stoi(v1.value) > std::stoi(v2.value);
+					result = val1 > val2;
 				else if (op.value == ".."){
 					std::cout << "operator .. is not implemented" << std::endl;
 					exit(-1);
 				}
 				else if (op.value == "<=")
-					result = std::stoi(v1.value) <= std::stoi(v2.value);
+					result = val1 <= val2;
 				else if (op.value == ">=")
-					result = std::stoi(v1.value) >= std::stoi(v2.value);
+					result = val1 >= val2;
 				else if (op.value == "==")
-					result = std::stoi(v1.value) == std::stoi(v2.value);
+					result = val1 == val2;
 				else if (op.value == "~="){
 					std::cout << "operator ~= is not implemented" << std::endl;
 					exit(-1);
 				}
 				else if (op.value == "and")
-					result = std::stoi(v1.value) && std::stoi(v2.value);
+					result = val1 && val2;
 				else if (op.value == "or")
-					result = std::stoi(v1.value) || std::stoi(v2.value);
+					result = val1 || val2;
 				else {
 					std::cout << "Fatal parsing error, invalid operator" << std::endl;
 					exit(-1);

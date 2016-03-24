@@ -180,7 +180,7 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($4);
 		}
 		| if elseiflist else END {
-			$$ = Node("stat","else-elseif-else");
+			$$ = Node("stat","if-elseif-else");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 			$$.children.push_back($3);
