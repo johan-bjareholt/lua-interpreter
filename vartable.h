@@ -24,6 +24,7 @@ class VarTable {
 		TableEntry* gettableentry(std::string name);
 	public:
 		VarTable();
+		void addvar(std::string name, Node& value);
 		void setvar(std::string name, Node& value);
 		bool delvar(std::string name);
 		Node& getvar(std::string name);

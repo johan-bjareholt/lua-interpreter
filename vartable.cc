@@ -30,25 +30,27 @@ int VarTable::genhash(std::string name){
 	return hash;
 }
 
-void VarTable::setvar(std::string name, Node& value){
+void VarTable::addvar(std::string name, Node& value){
 	int hash = genhash(name);
-	// Copy
+	TableEntry* tableentry = new TableEntry(name, value);
+	if (hashtable[hash] != nullptr)
+		tableentry->next = hashtable[hash];
+	hashtable[hash] = tableentry;
+	if (debug_interpretation)
+		std::cout << "Added variable " << name << std::endl;
+}
+
+void VarTable::setvar(std::string name, Node& value){
 	TableEntry* tableentry = gettableentry(name);
+	// Replace variable if it already exists
 	if (tableentry != nullptr){
-		// Replace variable
 		tableentry->value = value;
 		if (debug_interpretation)
 			std::cout << "Reassigned variable " << name << std::endl;
 	}
-	else {
-		// Add to hashtable
-		tableentry = new TableEntry(name, value);
-		if (hashtable[hash] != nullptr)
-			tableentry->next = hashtable[hash];
-		hashtable[hash] = tableentry;
-		if (debug_interpretation)
-			std::cout << "Added variable " << name << std::endl;
-	}
+	// Create new var
+	else
+		addvar(name, value);
 }
 
 bool VarTable::delvar(std::string name){

@@ -7,7 +7,38 @@
 #include <sstream>
 #include <list>
 
+class BlockContext {
+	public:
+	Node* block;
+	Node returnval;
+	bool is_returned = false;
+
+	BlockContext(Node& blocknode){
+		block = &blocknode;
+		returnval.tag = "NIL";
+		returnval.value = "";
+	}
+	void set_returnval(Node& returnval){
+		this->returnval = returnval;
+		is_returned = true;
+	}
+};
+
+/* Context variables */
+std::list<BlockContext> blocklist;
+
+
+
 void Node::interpret(){
+	// Check if block context has a return val, and abort if it has
+	BlockContext* context = nullptr;
+	if (!blocklist.empty()){
+		context = &blocklist.back();
+		if (context->is_returned == true)
+			return;
+	}
+	
+
 	bool earlymatch = false;
 	if (tag == "stat"){
 		if (value == "for,2var" || value == "for,3var"){
@@ -38,7 +69,6 @@ void Node::interpret(){
 				std::string varname = (*si).children.front().value;
 				(*si) = vartable->getvar(varname);
 			}
-			std::cout << (*si).tag << "," << (*si).value << std::endl;
 			if ((*si).tag != "int"){
 				std::cout << "Invalid end range in for loop" << std::endl;
 				exit(-1);
@@ -61,7 +91,7 @@ void Node::interpret(){
 				std::cout << varname << " = " << startval << "," << endval << "," << stepval << std::endl;
 			// Call children
 			Node itervar("int",std::to_string(startval));
-			vartable->setvar(varname,itervar);
+			vartable->addvar(varname,itervar);
 			Node& varref = vartable->getvar(varname);
 		
 			bool done = false;	
@@ -81,7 +111,6 @@ void Node::interpret(){
 				varval += stepval;
 				varref.value = std::to_string(varval);
 			}
-
 			vartable->delvar(varname);
 		}
 		else if (value == "if-elseif-else"){
@@ -104,9 +133,7 @@ void Node::interpret(){
 					std::string varname = ifcondition.children.front().value;
 					ifcondition = vartable->getvar(varname);
 				}
-				else if (ifcondition.tag == "op" || ifcondition.tag == "functioncall"){
-					ifcondition.interpret();
-				}
+				ifcondition.interpret();
 				//std::cout << ifcondition.tag <<":"<< ifcondition.value << std::endl;
 				if (ifcondition.tag != "int"){
 					std::cout << "Invalid if condition" << std::endl;
@@ -137,141 +164,180 @@ void Node::interpret(){
 	EARLYMATCHEND:
 	if (earlymatch == false)
 	{
+
 		for(std::list<Node>::iterator i=children.begin(); i!=children.end(); i++)
         	(*i).interpret();
 
-		if (tag == "functioncall"){
+
+		if (tag == "laststat"){
+			Node returnval;
+			if (value == "return explist"){
+				returnval = children.front().children.front();
+				if (returnval.tag == "var" && returnval.value == "name"){
+					std::string varname = returnval.children.front().value;
+					returnval = vartable->getvar(varname);
+				}
+			}
+			else {
+				returnval.tag = "NIL";
+				returnval.value = "";
+				children.clear();
+			}
+			context->set_returnval(returnval);
+		}
+
+		else if (tag == "functioncall"){
 			if (value == "2"){
 				std::cout << "This type of function call is not supported" << std::endl;
 				exit(-1);
 			}
-			if (children.size() >= 1){
-				std::list<Node>::iterator si = children.begin();
-				// Get func name
-				Node& namecontainer = (*si);
-				if (namecontainer.tag != "var" || namecontainer.value != "name"){
-					std::cout << "Parser error, invalid function name" << std::endl;
-					exit(-1);
-				}
-				auto nameiter = namecontainer.children.begin();
-				std::string funcname = (*nameiter).value;
+			if (children.size() < 1){
+				std::cout << "parsing error" << std::endl;
+				exit(-1);
+			}
+			std::list<Node>::iterator si = children.begin();
+			// Get func name
+			Node& namecontainer = (*si);
+			if (namecontainer.tag != "var" || namecontainer.value != "name"){
+				std::cout << "Parser error, invalid function name" << std::endl;
+				exit(-1);
+			}
+			auto nameiter = namecontainer.children.begin();
+			std::string funcname = (*nameiter).value;
+			if (debug_interpretation)
+				std::cout << "Calling func " << funcname << std::endl;
+			nameiter++;
+			while (nameiter != namecontainer.children.end()){
+				funcname += "." + (*nameiter).value;
 				nameiter++;
-				while (nameiter != namecontainer.children.end()){
-					funcname += "." + (*nameiter).value;
-					nameiter++;
-				}
+			}
 
-				// Get arguments
-				si++;
-				std::list<Node*> params;
-				if (si->tag == "explist"){
-					for (auto iter=si->children.begin(); iter != si->children.end(); iter++)
-						params.push_back(&(*iter));
-				}
-				else if (si->tag == "str" || si->tag == "int")
-					params.push_back(&(*si));
-				else {
-					std::cout << "Invalid parameters to function" << std::endl;
+			// Get arguments
+			si++;
+			std::list<Node*> params;
+			if (si->tag == "explist"){
+				for (auto iter=si->children.begin(); iter != si->children.end(); iter++)
+					params.push_back(&(*iter));
+			}
+			else if (si->tag == "str" || si->tag == "int")
+				params.push_back(&(*si));
+			else {
+				std::cout << "Invalid parameters to function" << std::endl;
+				exit(-1);
+			}
+
+			// Call function
+			if (funcname == "print" || funcname == "io.write"){
+				if (params.empty()){
+					std::cout << "Print function needs an argument" << std::endl;
 					exit(-1);
 				}
-
-				// Call function
-				if (funcname == "print" || funcname == "io.write"){
-					if (params.empty()){
-						std::cout << "Print function needs an argument" << std::endl;
+				for (auto pariter = params.begin(); pariter != params.end(); pariter++){
+					Node& par = *(*pariter);
+					// Fetch var if it is one
+					if (par.tag == "var" && par.value == "name"){
+						std::string varname = par.children.front().value;
+						par = vartable->getvar(varname);
+					}
+					// Print type
+					if (par.tag == "str"){
+						std::cout << par.value;
+					}
+					else if (par.tag == "int"){
+						std::cout << par.value;
+					}
+					else {
+						std::cout << funcname << " cannot print datatype " << par.tag << std::endl;
 						exit(-1);
 					}
-					for (auto pariter = params.begin(); pariter != params.end(); pariter++){
-						Node& par = *(*pariter);
-						if (par.tag == "str"){
-							std::cout << par.value;
-						}
-						else if (par.tag == "int"){
-							std::cout << par.value;
-						}
-						else if (par.tag == "var" && par.value == "name"){
-							std::string varname = par.children.front().value;
-							Node& node = vartable->getvar(varname);
-							std::cout << node.value;
-						}
-					}
-					if (funcname == "print")
-						std::cout << std::endl;
-					// Return
-					tag = "NIL";
-					value = "";
 				}
-				else if (funcname == "io.read"){
-					std::getline(std::cin, value);
-					int len = -1;
-					tag = "str";
-					if (params.size() != 0){
-						Node& par1 = *(params.front());
-						if (par1.tag == "str"){
-							if (par1.value == "*number")
-								tag = "int";
-							else {
-								std::cout << "This io.read function is not supported" << std::endl;
-								exit(-1);
-							}
-						}
-						else if (par1.tag == "int"){
-							std::cout << "Variable length input is not supported by io.read" << std::endl;
+				if (funcname == "print")
+					std::cout << std::endl;
+				// Return
+				tag = "NIL";
+				value = "";
+			}
+			else if (funcname == "io.read"){
+				std::getline(std::cin, value);
+				int len = -1;
+				tag = "str";
+				if (params.size() != 0){
+					Node& par1 = *(params.front());
+					if (par1.tag == "str"){
+						if (par1.value == "*number")
+							tag = "int";
+						else {
+							std::cout << "This io.read function is not supported" << std::endl;
 							exit(-1);
 						}
-						else {
-							std::cout << "Invalid io.read argument" << std::endl;
-						}
 					}
-
-					// Return
-				}
-				else {
-					Node& funcdef = vartable->getvar(funcname);
-					if (funcdef.tag != "funcbody"){
-						std::cout << funcname << " is not a funcion" << std::endl;
+					else if (par1.tag == "int"){
+						std::cout << "Variable length input is not supported by io.read" << std::endl;
 						exit(-1);
 					}
-					Node& parlist = funcdef.children.front().children.front();
-					Node& funcbody = funcdef.children.back();
+					else {
+						std::cout << "Invalid io.read argument" << std::endl;
+					}
+				}
+			}
+			else {
+				Node& funcdef = vartable->getvar(funcname);
+				if (funcdef.tag != "funcbody"){
+					std::cout << funcname << " is not a funcion" << std::endl;
+					exit(-1);
+				}
+				Node& parlist = funcdef.children.front().children.front();
+				Node& funcbody = funcdef.children.back();
+				
+				auto argsiter = params.begin();
+				auto pariter = parlist.children.begin();
+				while (pariter != parlist.children.end() && argsiter != params.end()){
+					// Get name
+					std::string argname = (*pariter).value;
+					// Get argument
+					Node& arg = *(*argsiter);
+
+					if (arg.tag == "var" && arg.value == "name"){
+						std::string varname = arg.children.front().value;
+						arg = vartable->getvar(varname);
+					}
+					arg.interpret();
+					vartable->addvar(argname, arg);
+					if (debug_interpretation)
+						std::cout << argname << "=" << arg.tag << ":" << arg.value << std::endl;
 					
-					auto argsiter = params.begin();
-					auto pariter = parlist.children.begin();
-					while (pariter != parlist.children.end() && argsiter != params.end()){
-						// Get name
-						std::string argname = (*pariter).value;
-						// Get argument
-						Node& arg = *(*argsiter);
-
-						/*if (arg.tag == "var" && arg.value == "name"){
-							arg = vartable->getvar(arg.children.front().value);
-						}*/
-						arg.interpret();
-						vartable->setvar(argname, arg);
-						if (debug_interpretation)
-							std::cout << argname << "=" << arg.tag << ":" << arg.value << std::endl;
-						
-						// Next iteration
-						argsiter++;
-						pariter++;
-					}
-					if (pariter != parlist.children.end()){
-						std::cout << "Function needs more arguments" << std::endl;
-						exit(-1);
-					}
-					if (argsiter != params.end()){
-						std::cout << "Function has too many arguments" << std::endl;
-						exit(-1);
-					}
-
-					Node copy = funcbody;
-					copy.interpret();
-
-					for (pariter = parlist.children.begin(); pariter != parlist.children.end(); pariter++){
-						std::string argname = (*pariter).value;
-						vartable->delvar(argname);
-					}
+					// Next iteration
+					argsiter++;
+					pariter++;
 				}
+				if (pariter != parlist.children.end()){
+					std::cout << "Function needs more arguments" << std::endl;
+					exit(-1);
+				}
+				if (argsiter != params.end()){
+					std::cout << "Function has too many arguments" << std::endl;
+					exit(-1);
+				}
+
+				// Get funcbody
+				Node copy = funcbody;
+				// Set context
+				blocklist.push_back(BlockContext(copy));
+				// Interpret
+				copy.interpret();
+				// Set returnval
+				if (debug_interpretation)
+					std::cout << "return set: " << blocklist.back().returnval.tag << ":" << blocklist.back().returnval.value << std::endl;
+				*this = blocklist.back().returnval;
+				blocklist.pop_back();
+
+				// Remove arguments
+				for (pariter = parlist.children.begin(); pariter != parlist.children.end(); pariter++){
+					std::string argname = (*pariter).value;
+					vartable->delvar(argname);
+				}
+				if (debug_interpretation)
+					std::cout << "return: " << tag << ":" << value << std::endl;
 			}
 			children.clear();
 		}
@@ -282,17 +348,18 @@ void Node::interpret(){
 				std::list<Node>::iterator variter = vars.begin();
 				std::list<Node>::iterator valiter = vals.begin();
 				while (variter != vars.end() && valiter != vals.end()){
+					Node& var = (*variter);
+					Node& val = (*valiter);
 					if (debug_interpretation)
-						std::cout << (*variter).tag << "=" << (*valiter).tag << std::endl;
-					if ((*variter).tag == "var" && (*variter).value == "name"){
-						std::string varname = (*variter).children.front().value;
-						vartable->setvar(varname, (*valiter));
+						std::cout << var.tag << "=" << val.tag << std::endl;
+					if (var.tag == "var" && var.value == "name"){
+						std::string varname = var.children.front().value;
+						vartable->setvar(varname, val);
 					}
 					else {
 						std::cout << "Invalid assignment, value needs to be assigned to a variable" << std::endl;
 						exit(-1);
 					}
-	
 					variter++;
 					valiter++;
 				}
@@ -306,13 +373,13 @@ void Node::interpret(){
 				Node& op = *i;
 				i++;
 				Node& v2 = *i;
-				//std::cout << v1.value << "," << v2.value << std::endl;
 				if (v1.tag == "var" && v1.value == "name")
 					v1 = vartable->getvar(v1.children.front().value);
 				if (v2.tag == "var" && v2.value == "name")
 					v2 = vartable->getvar(v2.children.front().value);
+				//std::cout << v1.value << "," << v2.value << std::endl;
 				if (v1.tag != "int" || v2.tag != "int"){
-					std::cout << "Cannot calculate on something that is not a number" << std::endl;
+					std::cout << "Cannot calculate something that is not a number" << std::endl;
 					exit(-1);
 				}
 				//std::cout << v1.value << op.value << v2.value << std::endl;
