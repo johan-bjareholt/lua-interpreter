@@ -410,7 +410,7 @@ funcbody: PARANTHESES_L parlist PARANTHESES_R block END {
 		}
 		| PARANTHESES_L PARANTHESES_R block END {
 			$$ = Node("funcbody","");
-			$$.children.push_back(Node("parlist",""));
+			$$.children.push_back(Node("parlist","empty"));
 			$$.children.push_back($3);
 		}
 		;

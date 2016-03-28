@@ -214,13 +214,13 @@ void Node::interpret(){
 
 			// Get arguments
 			si++;
-			std::list<Node*> params;
+			std::list<Node*> args;
 			if (si->tag == "explist"){
 				for (auto iter=si->children.begin(); iter != si->children.end(); iter++)
-					params.push_back(&(*iter));
+					args.push_back(&(*iter));
 			}
 			else if (si->tag == "str" || si->tag == "int")
-				params.push_back(&(*si));
+				args.push_back(&(*si));
 			else {
 				std::cout << "Invalid parameters to function" << std::endl;
 				exit(-1);
@@ -228,11 +228,11 @@ void Node::interpret(){
 
 			// Call function
 			if (funcname == "print" || funcname == "io.write"){
-				if (params.empty()){
+				if (args.empty()){
 					std::cout << "Print function needs an argument" << std::endl;
 					exit(-1);
 				}
-				for (auto pariter = params.begin(); pariter != params.end(); pariter++){
+				for (auto pariter = args.begin(); pariter != args.end(); pariter++){
 					Node& par = *(*pariter);
 					// Fetch var if it is one
 					if (par.tag == "var" && par.value == "name"){
@@ -261,17 +261,17 @@ void Node::interpret(){
 				std::getline(std::cin, value);
 				int len = -1;
 				tag = "str";
-				if (params.size() != 0){
-					Node& par1 = *(params.front());
-					if (par1.tag == "str"){
-						if (par1.value == "*number")
+				if (args.size() != 0){
+					Node& arg1 = *(args.front());
+					if (arg1.tag == "str"){
+						if (arg1.value == "*number")
 							tag = "int";
 						else {
 							std::cout << "This io.read function is not supported" << std::endl;
 							exit(-1);
 						}
 					}
-					else if (par1.tag == "int"){
+					else if (arg1.tag == "int"){
 						std::cout << "Variable length input is not supported by io.read" << std::endl;
 						exit(-1);
 					}
@@ -286,12 +286,13 @@ void Node::interpret(){
 					std::cout << funcname << " is not a funcion" << std::endl;
 					exit(-1);
 				}
+				bool noargs = funcdef.children.front().value == "empty";
 				Node& parlist = funcdef.children.front().children.front();
 				Node& funcbody = funcdef.children.back();
 				
-				auto argsiter = params.begin();
+				auto argsiter = args.begin();
 				auto pariter = parlist.children.begin();
-				while (pariter != parlist.children.end() && argsiter != params.end()){
+				while (noargs == false && pariter != parlist.children.end() && argsiter != args.end()){
 					// Get name
 					std::string argname = (*pariter).value;
 					// Get argument
@@ -310,12 +311,12 @@ void Node::interpret(){
 					argsiter++;
 					pariter++;
 				}
-				if (pariter != parlist.children.end()){
-					std::cout << "Function needs more arguments" << std::endl;
+				if (noargs == false && pariter != parlist.children.end()){
+					std::cout << "Functioncall needs more arguments" << std::endl;
 					exit(-1);
 				}
-				if (argsiter != params.end()){
-					std::cout << "Function has too many arguments" << std::endl;
+				if (argsiter != args.end()){
+					std::cout << "Functioncall has too many arguments" << std::endl;
 					exit(-1);
 				}
 
@@ -332,9 +333,13 @@ void Node::interpret(){
 				blocklist.pop_back();
 
 				// Remove arguments
-				for (pariter = parlist.children.begin(); pariter != parlist.children.end(); pariter++){
+				pariter = parlist.children.begin();
+				argsiter= args.begin();
+				while (noargs == false && pariter != parlist.children.end()){
 					std::string argname = (*pariter).value;
 					vartable->delvar(argname);
+					pariter++;
+					argsiter++;
 				}
 				if (debug_interpretation)
 					std::cout << "return: " << tag << ":" << value << std::endl;
