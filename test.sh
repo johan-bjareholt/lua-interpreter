@@ -50,5 +50,6 @@ itest tests/interpret/for.lua
 itest tests/interpret/ass_b1.lua
 itest tests/interpret/ass_b2.lua
 itest tests/interpret/func.lua
+itest tests/interpret/ass_a2.lua
 
 printf "%d/%d interpretation tests passed\n" $itestpass $itestcount
