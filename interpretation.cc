@@ -40,126 +40,128 @@ void Node::interpret(){
 	
 
 	bool earlymatch = false;
-	if (tag == "stat"){
-		if (value == "for,2var" || value == "for,3var"){
-			earlymatch = true;
-			std::list<Node>::iterator si = children.begin();
-			// Get iteration var
-			if ((*si).tag != "name"){
-				std::cout << "Invalid var in for loop" << std::endl;
-				exit(-1);
-			}
-			std::string varname = (*si).value;
+	if (tag == "for"){
+		if (value == "in"){
+			std::cout << "for .. in is not yet supported" << std::endl;
+			exit(-1);
+		}
+		earlymatch = true;
+		std::list<Node>::iterator si = children.begin();
+		// Get iteration var
+		if ((*si).tag != "name"){
+			std::cout << "Invalid var in for loop" << std::endl;
+			exit(-1);
+		}
+		std::string varname = (*si).value;
 
-			// Get start value
+		// Get start value
+		si++;
+		if ((*si).tag == "var" && (*si).value == "name"){
+			std::string varname = (*si).children.front().value;
+			(*si) = vartable->getvar(varname);
+		}
+		if ((*si).tag != "int"){
+			std::cout << "Invalid start range in for loop" << std::endl;
+			exit(-1);
+		}
+		int startval = std::stoi((*si).value);
+
+		// Get end value
+		si++;
+		if ((*si).tag == "var" && (*si).value == "name"){
+			std::string varname = (*si).children.front().value;
+			(*si) = vartable->getvar(varname);
+		}
+		if ((*si).tag != "int"){
+			std::cout << "Invalid end range in for loop" << std::endl;
+			exit(-1);
+		}
+		int endval = std::stoi((*si).value);
+
+		// Get step size
+		int stepval = 1;
+		if (value == "3var"){
 			si++;
-			if ((*si).tag == "var" && (*si).value == "name"){
-				std::string varname = (*si).children.front().value;
-				(*si) = vartable->getvar(varname);
-			}
 			if ((*si).tag != "int"){
-				std::cout << "Invalid start range in for loop" << std::endl;
+				std::cout << "Invalid step in for loop" << std::endl;
 				exit(-1);
 			}
-			int startval = std::stoi((*si).value);
+			stepval = std::stoi((*si).value);
+		}
 
-			// Get end value
-			si++;
-			if ((*si).tag == "var" && (*si).value == "name"){
-				std::string varname = (*si).children.front().value;
-				(*si) = vartable->getvar(varname);
-			}
-			if ((*si).tag != "int"){
-				std::cout << "Invalid end range in for loop" << std::endl;
-				exit(-1);
-			}
-			int endval = std::stoi((*si).value);
+		// Debug to see if it's correctly parsed
+		if (debug_interpretation)
+			std::cout << varname << " = " << startval << "," << endval << "," << stepval << std::endl;
+		// Call children
+		Node itervar("int",std::to_string(startval));
+		vartable->addvar(varname,itervar);
+		Node& varref = vartable->getvar(varname);
+	
+		bool done = false;	
+		int varval;
+		varval = std::stoi(varref.value);
+		if (varval >= endval)
+			done = true;
 
-			// Get step size
-			int stepval = 1;
-			if (value == "for,3var"){
-				si++;
-				if ((*si).tag != "int"){
-					std::cout << "Invalid step in for loop" << std::endl;
-					exit(-1);
-				}
-				stepval = std::stoi((*si).value);
-			}
-
-			// Debug to see if it's correctly parsed
-			if (debug_interpretation)
-				std::cout << varname << " = " << startval << "," << endval << "," << stepval << std::endl;
-			// Call children
-			Node itervar("int",std::to_string(startval));
-			vartable->addvar(varname,itervar);
-			Node& varref = vartable->getvar(varname);
-		
-			bool done = false;	
-			int varval;
+		Node copy;
+		while (done == false){
+			copy = *this;
+			for(std::list<Node>::iterator i=copy.children.begin(); i!=copy.children.end(); i++)
+    			(*i).interpret();
 			varval = std::stoi(varref.value);
 			if (varval >= endval)
 				done = true;
-
-			Node copy;
-			while (done == false){
-				copy = *this;
-				for(std::list<Node>::iterator i=copy.children.begin(); i!=copy.children.end(); i++)
-        			(*i).interpret();
-				varval = std::stoi(varref.value);
-				if (varval >= endval)
-					done = true;
-				varval += stepval;
-				varref.value = std::to_string(varval);
-			}
-			vartable->delvar(varname);
+			varval += stepval;
+			varref.value = std::to_string(varval);
 		}
-		else if (value == "if-elseif-else"){
-			earlymatch = true;
-			if (debug_interpretation)
-				std::cout << "if-elseif-else" << std::endl;
-			auto si = children.begin();
-			// If
-			Node& ifnode = (*si);
-			// Else if
-			si++;
-			Node& ifcontainer = (*si);
-			// Add if to front of elseif container
-			ifcontainer.children.push_front(ifnode);
-			// Go through ifs
-			for (auto ifiter = ifcontainer.children.begin(); ifiter != ifcontainer.children.end(); ifiter++){
-				Node& node = (*ifiter);
-				Node& ifcondition = node.children.front();
-				if (ifcondition.tag == "var" && ifcondition.value == "name"){
-					std::string varname = ifcondition.children.front().value;
-					ifcondition = vartable->getvar(varname);
-				}
-				ifcondition.interpret();
-				//std::cout << ifcondition.tag <<":"<< ifcondition.value << std::endl;
-				if (ifcondition.tag != "int"){
-					std::cout << "Invalid if condition" << std::endl;
-					exit(-1);
-				}
-				if (std::stoi(ifcondition.value) > 0){
-					Node& ifblock = node.children.back();
-					ifblock.interpret();
-					goto EARLYMATCHEND;
-				}
+		vartable->delvar(varname);
+	}
+	if (tag == "ifelse"){
+		earlymatch = true;
+		if (debug_interpretation)
+			std::cout << "if-elseif-else" << std::endl;
+		auto si = children.begin();
+		// If
+		Node& ifnode = (*si);
+		// Else if
+		si++;
+		Node& ifcontainer = (*si);
+		// Add if to front of elseif container
+		ifcontainer.children.push_front(ifnode);
+		// Go through ifs
+		for (auto ifiter = ifcontainer.children.begin(); ifiter != ifcontainer.children.end(); ifiter++){
+			Node& node = (*ifiter);
+			Node& ifcondition = node.children.front();
+			if (ifcondition.tag == "var" && ifcondition.value == "name"){
+				std::string varname = ifcondition.children.front().value;
+				ifcondition = vartable->getvar(varname);
 			}
-			// Else
-			si++;
-			Node& elsenode = (*si);
-			if (elsenode.value != "empty"){
-				elsenode.interpret();
+			ifcondition.interpret();
+			//std::cout << ifcondition.tag <<":"<< ifcondition.value << std::endl;
+			if (ifcondition.tag != "int"){
+				std::cout << "Invalid if condition" << std::endl;
+				exit(-1);
+			}
+			if (std::stoi(ifcondition.value) > 0){
+				Node& ifblock = node.children.back();
+				ifblock.interpret();
+				goto EARLYMATCHEND;
 			}
 		}
-		else if (value == "function"){
-			earlymatch = true;
-			std::string funcname = children.front().value;
-			Node& funcdef = children.back();
-			vartable->setvar(funcname, funcdef);
-			if (debug_interpretation)
-				std::cout << "Defined function " << funcname << std::endl;
+		// Else
+		si++;
+		Node& elsenode = (*si);
+		if (elsenode.value != "empty"){
+			elsenode.interpret();
 		}
+	}
+	if (tag == "funcdef"){
+		earlymatch = true;
+		std::string funcname = children.front().value;
+		Node& funcdef = children.back();
+		vartable->setvar(funcname, funcdef);
+		if (debug_interpretation)
+			std::cout << "Defined function " << funcname << std::endl;
 	}
 	EARLYMATCHEND:
 	if (earlymatch == false)
@@ -169,9 +171,9 @@ void Node::interpret(){
         	(*i).interpret();
 
 
-		if (tag == "laststat"){
+		if (tag == "return"){
 			Node returnval;
-			if (value == "return explist"){
+			if (value == "explist"){
 				returnval = children.front().children.front();
 				if (returnval.tag == "var" && returnval.value == "name"){
 					std::string varname = returnval.children.front().value;
@@ -179,14 +181,12 @@ void Node::interpret(){
 				}
 			}
 			else {
-				returnval.tag = "NIL";
-				returnval.value = "";
 				children.clear();
 			}
 			context->set_returnval(returnval);
 		}
 
-		else if (tag == "functioncall"){
+		else if (tag == "funccall"){
 			if (value == "2"){
 				std::cout << "This type of function call is not supported" << std::endl;
 				exit(-1);
@@ -199,7 +199,7 @@ void Node::interpret(){
 			// Get func name
 			Node& namecontainer = (*si);
 			if (namecontainer.tag != "var" || namecontainer.value != "name"){
-				std::cout << "Parser error, invalid function name" << std::endl;
+				std::cout << "Parser error, cannot call something that is not a function" << std::endl;
 				exit(-1);
 			}
 			auto nameiter = namecontainer.children.begin();
@@ -346,28 +346,26 @@ void Node::interpret(){
 			}
 			children.clear();
 		}
-		else if (tag == "stat"){
-			if (value == "assignment"){
-				std::list<Node>& vars = children.front().children;
-				std::list<Node>& vals = children.back().children;
-				std::list<Node>::iterator variter = vars.begin();
-				std::list<Node>::iterator valiter = vals.begin();
-				while (variter != vars.end() && valiter != vals.end()){
-					Node& var = (*variter);
-					Node& val = (*valiter);
-					if (debug_interpretation)
-						std::cout << var.tag << "=" << val.tag << std::endl;
-					if (var.tag == "var" && var.value == "name"){
-						std::string varname = var.children.front().value;
-						vartable->setvar(varname, val);
-					}
-					else {
-						std::cout << "Invalid assignment, value needs to be assigned to a variable" << std::endl;
-						exit(-1);
-					}
-					variter++;
-					valiter++;
+		else if (tag == "varass"){
+			std::list<Node>& vars = children.front().children;
+			std::list<Node>& vals = children.back().children;
+			std::list<Node>::iterator variter = vars.begin();
+			std::list<Node>::iterator valiter = vals.begin();
+			while (variter != vars.end() && valiter != vals.end()){
+				Node& var = (*variter);
+				Node& val = (*valiter);
+				if (debug_interpretation)
+					std::cout << var.tag << "=" << val.tag << std::endl;
+				if (var.tag == "var" && var.value == "name"){
+					std::string varname = var.children.front().value;
+					vartable->setvar(varname, val);
 				}
+				else {
+					std::cout << "Invalid assignment, value needs to be assigned to a variable" << std::endl;
+					exit(-1);
+				}
+				variter++;
+				valiter++;
 			}
 		}
 		else if (tag == "op"){

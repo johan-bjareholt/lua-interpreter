@@ -144,56 +144,74 @@ optsemi	: SEMICOLON {}
 		;
 
 laststat: RETURN explist optsemi {
-			$$ = Node("laststat","return explist");
+			$$ = Node("return","explist");
 			$$.children.push_back($2);
 		}
 		| RETURN optsemi {
-			$$ = Node("laststat","empty return");
+			$$ = Node("return","empty");
 		}
 		| BREAK optsemi {
-			$$ = Node("laststat","break");
+			$$ = Node("return","break");
 			$$.children.push_back(Node("break",""));
 		}
 		;
 
 stat	: varlist EQUALS explist {
-			$$ = Node("stat", "assignment");
+			$$ = Node("varass", "");
 			$$.children.push_back($1);
 			$$.children.push_back($3);
 		}
+		| LOCAL namelist EQUALS explist {
+			$$ = Node("varass","local");
+			$$.children.push_back($2);
+			$$.children.push_back($4);
+		}
+		| LOCAL namelist {
+			$$ = Node("vardef","local");
+			$$.children.push_back($2);
+		}
+		| FUNCTION funcname funcbody {
+			$$ = Node("funcdef","");
+			$$.children.push_back($2);
+			$$.children.push_back($3);
+		}
+		| LOCAL FUNCTION name funcbody {
+			$$ = Node("funcdef","local");
+			$$.children.push_back($3);
+			$$.children.push_back($4);
+		}
 		| functioncall {
-			$$ = Node("stat","functioncall");
-			$$.children.push_back($1);
+			$$ = $1;
 		}
 		| DO block END {
-			$$ = Node("stat", "do-end block");
+			$$ = Node("do", "");
 			$$.children.push_back($2);
 		}
 		| WHILE exp DO block END {
-			$$ = Node("stat","while-do-end block");
+			$$ = Node("while","");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 		}
 		| REPEAT block UNTIL exp {
-			$$ = Node("stat","repear-until block");
+			$$ = Node("repeat","");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 		}
 		| if elseiflist else END {
-			$$ = Node("stat","if-elseif-else");
+			$$ = Node("ifelse","");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 			$$.children.push_back($3);
 		}
 		| FOR name EQUALS exp COMMA exp DO block END {
-			$$ = Node("stat","for,2var");
+			$$ = Node("for","2var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 			$$.children.push_back($6);
 			$$.children.push_back($8);
 		}
 		| FOR name EQUALS exp COMMA exp COMMA exp DO block END {
-			$$ = Node("stat","for,3var");
+			$$ = Node("for","3var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 			$$.children.push_back($6);
@@ -201,29 +219,10 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($10);
 		}
 		| FOR namelist IN explist DO block END {
-			$$ = Node("stat","for, in");
+			$$ = Node("for","in");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 			$$.children.push_back($6);
-		}
-		| FUNCTION funcname funcbody {
-			$$ = Node("stat","function");
-			$$.children.push_back($2);
-			$$.children.push_back($3);
-		}
-		| LOCAL FUNCTION name funcbody {
-			$$ = Node("stat","local function");
-			$$.children.push_back($3);
-			$$.children.push_back($4);
-		}
-		| LOCAL namelist {
-			$$ = Node("stat","undefied local variable");
-			$$.children.push_back($2);
-		}
-		| LOCAL namelist EQUALS explist {
-			$$ = Node("stat","local variable");
-			$$.children.push_back($2);
-			$$.children.push_back($4);
 		}
 	 	;
 
@@ -391,12 +390,12 @@ function: FUNCTION funcbody {
 		;
 
 functioncall: prefixexp args {
-			$$ = Node("functioncall","1");
+			$$ = Node("funccall","");
 			$$.children.push_back($1);
 			$$.children.push_back($2);
 		}
 		| prefixexp COLON name args {
-			$$ = Node("functioncall","2");
+			$$ = Node("funccall","2");
 			$$.children.push_back($1);
 			$$.children.push_back($3);
 			$$.children.push_back($4);
