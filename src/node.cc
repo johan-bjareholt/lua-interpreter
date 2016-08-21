@@ -7,13 +7,16 @@
 #include <sstream>
 #include <list>
 
+static int next_id = -1;
+
 Node::Node(std::string t, std::string v) : tag(t), value(v){
 	line = linenr;
+    id = next_id++;
 }
-
 
 Node::Node() {
 	line = linenr;
+    id = next_id++;
 	tag="uninitialised";
 	value="uninitialised";
 } // Bison needs a default constructor.
@@ -46,9 +49,10 @@ void Node::dumps_dot(std::stringstream& ss, int depth) {
     for(std::list<Node>::iterator i=children.begin(); i!=children.end(); i++){
     	for(int si=0; si<depth+4; si++)
         	ss << " ";
-    	ss << '"' << tag << ':' << value << "@L" << line;
+    	ss << '"' << tag << ':' << value << "@L" << line << "-" << id;
  		ss << "\" -> \"";
-		ss << (*i).tag << ':' << (*i).value << "@L" << (*i).line << "\" ;" << std::endl;
+		ss << (*i).tag << ':' << (*i).value << "@L" << (*i).line << "-" << (*i).id;
+        ss << "\" ;" << std::endl;
 	}
 
     for(std::list<Node>::iterator i=children.begin(); i!=children.end(); i++)
