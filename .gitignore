@@ -1,6 +1,3 @@
-stack.hh
-grammar.tab.cc
-grammar.tab.hh
+build/
 *.o
-lex.yy.c
 lua

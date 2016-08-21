@@ -1,22 +1,29 @@
 NAME=lua
-CPPFLAGS=-g --std=c++11
+CPPFLAGS=-g --std=c++11 -I./src -I./build
 
-SRC=main.cc node.cc vartable.cc interpretation.cc
+SRC=src/main.cc src/node.cc src/vartable.cc src/interpretation.cc
 
 # Link & compile
-parser: lex.yy.c grammar.tab.o main.cc node.cc
-	g++ $(CPPFLAGS) -o $(NAME) $(SRC) grammar.tab.o lex.yy.c
+parser: build/lex.yy.c build/grammar.tab.o src/main.cc src/node.cc
+	g++ $(CPPFLAGS) -o $(NAME) $(SRC) build/grammar.tab.o build/lex.yy.c
 
 # Grammar
-grammar.tab.o: grammar.tab.cc
-	g++ $(CPPFLAGS) -c grammar.tab.cc
-grammar.tab.cc: grammar.yy
-	bison grammar.yy
+build/grammar.tab.o: build/grammar.tab.cc prepare
+	g++ $(CPPFLAGS) -c build/grammar.tab.cc -o $@
+build/grammar.tab.cc: src/grammar.yy prepare
+	bison src/grammar.yy -o $@
 
 # Lexing
-lex.yy.c: lex.ll grammar.tab.cc
-	flex lex.ll
+build/lex.yy.c: src/lex.ll build/grammar.tab.cc prepare
+	flex -o $@ src/lex.ll
 
 # Clean
+.PHONY: clean
 clean:
-	rm $(NAME) grammar.tab.* lex.yy.c* stack.hh
+	rm -f $(NAME)
+	rm -rf ./build
+
+# Prepare
+.PHONY: prepare
+prepare:
+	mkdir -p build
