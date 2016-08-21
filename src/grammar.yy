@@ -671,11 +671,7 @@ op_8    : op_8 POWER op_9 {
         }
         ;
 
-op_9    : PARANTHESES_L op_1 PARANTHESES_R {
-            $$ = Node("exp", "");
-            $$.children.push_back($2);
-        }
-        | exp {
+op_9    : exp {
             $$ = $1;
         }
         ;
