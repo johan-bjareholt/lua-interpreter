@@ -100,7 +100,7 @@ void Node::interpret(){
 		bool done = false;	
 		int varval;
 		varval = std::stoi(varref.value);
-		if (varval >= endval)
+		if (varval > endval)
 			done = true;
 
 		Node copy;
@@ -109,7 +109,7 @@ void Node::interpret(){
 			for(std::list<Node>::iterator i=copy.children.begin(); i!=copy.children.end(); i++)
     			(*i).interpret();
 			varval = std::stoi(varref.value);
-			if (varval >= endval)
+			if (varval > endval)
 				done = true;
 			varval += stepval;
 			varref.value = std::to_string(varval);
