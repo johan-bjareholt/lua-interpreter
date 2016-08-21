@@ -1,0 +1,6 @@
+stack.hh
+grammar.tab.cc
+grammar.tab.hh
+*.o
+lex.yy.c
+lua
