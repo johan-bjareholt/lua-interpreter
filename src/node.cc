@@ -49,9 +49,9 @@ void Node::dumps_dot(std::stringstream& ss, int depth) {
     for(std::list<Node>::iterator i=children.begin(); i!=children.end(); i++){
     	for(int si=0; si<depth+4; si++)
         	ss << " ";
-    	ss << '"' << tag << ':' << value << "@L" << line << "-" << id;
+    	ss << '"' << tag << ':' << value << "@L" << line << "#" << id;
  		ss << "\" -> \"";
-		ss << (*i).tag << ':' << (*i).value << "@L" << (*i).line << "-" << (*i).id;
+		ss << (*i).tag << ':' << (*i).value << "@L" << (*i).line << "#" << (*i).id;
         ss << "\" ;" << std::endl;
 	}
 
