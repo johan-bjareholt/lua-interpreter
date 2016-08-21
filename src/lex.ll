@@ -36,10 +36,26 @@ then									{ log("then", yytext); return yy::parser::make_THEN(yytext); }
 elseif									{ log("elseif", yytext); return yy::parser::make_ELSEIF(yytext); }
 else									{ log("else", yytext); return yy::parser::make_ELSE(yytext); }
  
- /* Token categories */
-([+*/^%<>]|\.\.|<=|>=|==|~=|and|or)		{ log("binop",yytext); return yy::parser::make_BINOP(yytext); }
-([#]|not)								{ log("unop",yytext); return yy::parser::make_UNOP(yytext); }
--										{ log("minus(unop/binop)",yytext); return yy::parser::make_MINUS(yytext); }
+ /* Binary Operators */
+[+]                                     { log("binop/+", yytext); return yy::parser::make_PLUS(yytext); }
+[-]                                     { log("binop/-", yytext); return yy::parser::make_MINUS(yytext); }
+[*]                                     { log("binop/*", yytext); return yy::parser::make_TIMES(yytext); }
+[/]                                     { log("binop//", yytext); return yy::parser::make_DIVIDE(yytext); }
+[\^]                                    { log("binop/^", yytext); return yy::parser::make_POWER(yytext); }
+[%]                                     { log("binop/%", yytext); return yy::parser::make_MODULO(yytext); }
+[=][=]                                  { log("binop/==", yytext); return yy::parser::make_EQUALS(yytext); }
+[<]                                     { log("binop/<", yytext); return yy::parser::make_LESS_THAN(yytext); }
+[<][=]                                  { log("binop/<=", yytext); return yy::parser::make_LESS_EQUAL_THAN(yytext); }
+[>]                                     { log("binop/>", yytext); return yy::parser::make_MORE_THAN(yytext); }
+[>][=]                                  { log("binop/>=", yytext); return yy::parser::make_MORE_EQUAL_THAN(yytext); }
+[~][=]                                  { log("binop/~=", yytext); return yy::parser::make_TILDE_EQUAL(yytext); }
+[.][.]                                  { log("binop/..", yytext); return yy::parser::make_APPEND(yytext); }
+ /* Unary Operators */
+and                                     { log("unop/and", yytext); return yy::parser::make_AND(yytext); }
+or                                      { log("unop/or", yytext); return yy::parser::make_OR(yytext); }
+[#]                                     { log("unop/#", yytext); return yy::parser::make_SQUARE(yytext); }
+not                                     { log("unop/not", yytext); return yy::parser::make_NOT(yytext); }
+
 
  /*  */
 local									{ log("local", yytext); return yy::parser::make_LOCAL(yytext); }
@@ -61,7 +77,7 @@ true									{ log("true", yytext); return yy::parser::make_TRUE(yytext);}
 
 
  /* Single tokens */
-=										{ log("equals",yytext); return yy::parser::make_EQUALS(yytext); }
+=										{ log("assign",yytext); return yy::parser::make_ASSIGN(yytext); }
 \.										{ log("dot",yytext); return yy::parser::make_DOT(yytext); }
 :										{ log("colon",yytext); return yy::parser::make_COLON(yytext); }
 ,										{ log("comma",yytext); return yy::parser::make_COMMA(yytext); }

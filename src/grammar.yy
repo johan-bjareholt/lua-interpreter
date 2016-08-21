@@ -54,8 +54,18 @@
 %type <Node> fieldsep
 
 %type <Node> string
-%type <Node> binop
-%type <Node> unop
+
+%type <Node> op
+%type <Node> op_1
+%type <Node> op_2
+%type <Node> op_3
+%type <Node> op_4
+%type <Node> op_5
+%type <Node> op_6
+%type <Node> op_7
+%type <Node> op_8
+%type <Node> op_9
+
 
 %token <std::string> DO
 %token <std::string> WHILE
@@ -84,11 +94,28 @@
 %token <std::string> TDOT
 %token <std::string> NAME
 
-%token <std::string> BINOP
-%token <std::string> UNOP
+%token <std::string> PLUS
 %token <std::string> MINUS
+%token <std::string> TIMES
+%token <std::string> DIVIDE
+%token <std::string> POWER
+%token <std::string> MODULO
 
 %token <std::string> EQUALS
+%token <std::string> LESS_THAN
+%token <std::string> MORE_THAN
+%token <std::string> LESS_EQUAL_THAN
+%token <std::string> MORE_EQUAL_THAN
+%token <std::string> TILDE_EQUAL
+
+%token <std::string> AND
+%token <std::string> OR
+%token <std::string> SQUARE
+%token <std::string> NOT
+
+%token <std::string> APPEND
+
+%token <std::string> ASSIGN
 %token <std::string> DOT
 %token <std::string> COLON
 %token <std::string> COMMA
@@ -156,12 +183,12 @@ laststat: RETURN explist optsemi {
 		}
 		;
 
-stat	: varlist EQUALS explist {
+stat	: varlist ASSIGN explist {
 			$$ = Node("varass", "");
 			$$.children.push_back($1);
 			$$.children.push_back($3);
 		}
-		| LOCAL namelist EQUALS explist {
+		| LOCAL namelist ASSIGN explist {
 			$$ = Node("varass","local");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
@@ -203,14 +230,14 @@ stat	: varlist EQUALS explist {
 			$$.children.push_back($2);
 			$$.children.push_back($3);
 		}
-		| FOR name EQUALS exp COMMA exp DO block END {
+		| FOR name ASSIGN exp COMMA exp DO block END {
 			$$ = Node("for","2var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
 			$$.children.push_back($6);
 			$$.children.push_back($8);
 		}
-		| FOR name EQUALS exp COMMA exp COMMA exp DO block END {
+		| FOR name ASSIGN exp COMMA exp COMMA exp DO block END {
 			$$ = Node("for","3var");
 			$$.children.push_back($2);
 			$$.children.push_back($4);
@@ -349,17 +376,9 @@ exp		: NIL {
 			$$ = Node("exp","tableconstructor");
 			$$.children.push_back($1);
 		}
-		| exp binop exp {
-			$$ = Node("op", "binop");
-			$$.children.push_back($1);
-			$$.children.push_back($2);
-			$$.children.push_back($3);
-		}
-		| unop exp {
-			$$ = Node("op","unop");
-			$$.children.push_back($1);
-			$$.children.push_back($2);
-		}
+        | op {
+            $$ = $1;
+        }
 		;
 
 explist	: exp {
@@ -450,12 +469,12 @@ tableconstructor: BRACES_L fieldlist BRACES_R {
 		}
 		;
 
-field	: BRACKET_L exp BRACKET_R EQUALS exp {
+field	: BRACKET_L exp BRACKET_R ASSIGN exp {
 	  		$$ = Node("field","bracketequals");
 			$$.children.push_back($2);
 			$$.children.push_back($5);
 	  	}
-		| name EQUALS exp {
+		| name ASSIGN exp {
 			$$ = Node("field","equals");
 			$$.children.push_back($1);
 			$$.children.push_back($3);
@@ -498,18 +517,165 @@ string	: STRING {
 	   	}
 		;
 
-binop	: BINOP {
-	  		$$ = Node("binop", $1);
-	  	}
-		| MINUS {
-			$$ = Node("binop", $1);
-		}
-		;
+/*
+    Operator Priority
+*/
 
-unop	: UNOP {
-	 		$$ = Node("unop", $1);
-	 	}
-		| MINUS {
-			$$ = Node("unop", $1);
-		}
-		;
+op      : op_1 {
+            $$ = $1;
+        }
+        ;
+
+op_1    : op_1 OR op_2 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_2 {
+            $$ = $1;
+        }
+        ;
+
+op_2    : op_2 AND op_3 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_3 {
+            $$ = $1;
+        }
+        ;
+
+op_3    : op_3 LESS_THAN op_4 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_3 LESS_EQUAL_THAN op_4 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_3 MORE_THAN op_4 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_3 MORE_EQUAL_THAN op_4 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_3 TILDE_EQUAL op_4 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_3 EQUALS op_4 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_4 {
+            $$ = $1;
+        }
+        ;
+
+op_4    : op_4 APPEND op_5 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_5 {
+            $$ = $1;
+        }
+        ;
+
+op_5    : op_5 PLUS op_6 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_5 MINUS op_6 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_6 {
+            $$ = $1;
+        }
+        ;
+
+op_6    : op_6 TIMES op_7 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_6 DIVIDE op_7 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        } 
+        | op_6 MODULO op_7 {
+            $$ = Node("op", "binop");
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        } 
+        | op_7 {
+            $$ = $1;
+        }
+        ;
+
+op_7    : NOT op_8 {
+            $$ = Node("op", "unop");
+            $$.children.push_back(Node("unop", $1));
+            $$.children.push_back($2);
+        } 
+        | SQUARE op_8 {
+            $$ = Node("op", "unop");
+            $$.children.push_back(Node("unop", $1));
+            $$.children.push_back($2);
+        } 
+        | MINUS op_8 {
+            $$ = Node("op", "unop");
+            $$.children.push_back(Node("unop", $1));
+            $$.children.push_back($2);
+        } 
+        | op_8 {
+            $$ = $1;
+        }
+        ;
+
+op_8    : op_8 POWER op_9 {
+            $$ = Node("binop", $2);
+            $$.children.push_back($1);
+            $$.children.push_back(Node("binop", $2));
+            $$.children.push_back($3);
+        }
+        | op_9 {
+            $$ = $1;
+        }
+        ;
+
+op_9    : PARANTHESES_L op_1 PARANTHESES_R {
+            $$ = Node("exp", "");
+            $$.children.push_back($2);
+        }
+        | exp {
+            $$ = $1;
+        }
+        ;

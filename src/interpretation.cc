@@ -380,7 +380,7 @@ void Node::interpret(){
 					v1 = vartable->getvar(v1.children.front().value);
 				if (v2.tag == "var" && v2.value == "name")
 					v2 = vartable->getvar(v2.children.front().value);
-				//std::cout << v1.value << "," << v2.value << std::endl;
+				//std::cout << v1.tag << ":" << v1.value << "," << v1.tag << ":" << v2.value << std::endl;
 				if (v1.tag != "int" || v2.tag != "int"){
 					std::cout << "Cannot calculate something that is not a number" << std::endl;
 					exit(-1);
@@ -441,10 +441,20 @@ void Node::interpret(){
 				}
 				//std::cout << result << std::endl;
 	
-				value = std::to_string(result);
-				tag = "int";
-				children.clear();
+				this->value = std::to_string(result);
+				this->tag = "int";
+				this->children.clear();
 			}
 		}
+        else if (tag == "exp"){
+            if (children.size() == 1){
+                Node& child = (*children.begin());
+                if (child.tag == "int"){
+                    this->tag = child.tag;
+                    this->value = child.value;
+                    this->children.clear();
+                }
+            }
+        }
 	}
 }
