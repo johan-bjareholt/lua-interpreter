@@ -386,9 +386,9 @@ void Node::interpret(){
 					exit(-1);
 				}
 				//std::cout << v1.value << op.value << v2.value << std::endl;
-				int val1 = std::stoi(v1.value);
-				int val2 = std::stoi(v2.value);
-				int result;
+				long val1 = std::stol(v1.value);
+				long val2 = std::stol(v2.value);
+				long result;
 				if (op.value == "+")
 					result = val1 + val2;
 				else if (op.value == "-")
