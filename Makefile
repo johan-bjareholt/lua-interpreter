@@ -21,6 +21,7 @@ build/lex.yy.c: src/lex.ll build/grammar.tab.cc prepare
 .PHONY: clean
 clean:
 	rm -f $(NAME)
+	rm -f parse.dot
 	rm -rf ./build
 
 # Prepare

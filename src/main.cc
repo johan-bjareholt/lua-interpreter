@@ -49,6 +49,11 @@ int main(int argc, char** argv){
 			std::cout << ss.str();
 			ss.clear();
 		}
+        else {
+            std::ofstream outfile("parse.dot");
+			root.dumps_dot(outfile);
+            outfile.close();
+        }
 		if (interpret == true){
 			root.interpret();
 		}

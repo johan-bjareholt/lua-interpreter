@@ -31,7 +31,7 @@ void Node::operator==(Node& node){
 	}
 }
 
-void Node::dumps_str(std::stringstream& ss, int depth) {
+void Node::dumps_str(std::ostream& ss, int depth) {
     for(int i=0; i<depth; i++)
         ss << " ";
     ss << tag << ":" << value << std::endl;
@@ -39,7 +39,7 @@ void Node::dumps_str(std::stringstream& ss, int depth) {
         (*i).dumps_str(ss, depth+1);
 }
 
-void Node::dumps_dot(std::stringstream& ss, int depth) {
+void Node::dumps_dot(std::ostream& ss, int depth) {
 	if (depth == 0){
 		ss << "digraph parsetree {" << std::endl;
 		ss << "    size=\"6,6\";" << std::endl;
